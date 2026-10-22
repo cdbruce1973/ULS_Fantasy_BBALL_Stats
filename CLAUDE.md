@@ -4,7 +4,7 @@ Automated all-time history site for a 12-team Yahoo fantasy basketball league (s
 Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn't write from scratch). Explain choices plainly.
 
 ## Stack
-- Front end: React 19 + Vite, hash routing, single `App.jsx`, tokens in `src/styles.css`. Deploys to Netlify (not yet deployed).
+- Front end: React 19 + Vite, hash routing, single `App.jsx`, tokens in `src/styles.css`. Deploys to Netlify from GitHub `cdbruce1973/ULS_Fantasy_BBALL_Stats` (`netlify.toml`).
 - Back end: Supabase project `bcqzsqbtvukpqgmfctmj` (Postgres, RLS, edge functions, pg_cron/pg_net for scheduled sync).
 - Data: Yahoo Fantasy API v2 (OAuth2, scope `fspt-r`). Until sync works, the UI reads `src/data.js` generated from the old sheet (`scripts/parse_sheet.py`).
 - Everything under `supabase/` is reference source; the live copies are in the Supabase project.
@@ -23,15 +23,17 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 ## Status (2026-10-22)
 - UI preview done and published as a Claude artifact (owner pages with banners, mobile-tuned).
 - Yahoo OAuth works (token stored) but every fantasy endpoint returns 403 "not authorized". Yahoo emailed approval; access turns on after the agreement, a NEW app with Fantasy Sports read permission, and the Client ID on the confirmation form (submitted for old and new app). Waiting on Yahoo support.
+- Head-to-head section built (`src/h2h.js` + H2H views in `App.jsx`, routes `#h2h`, `#h2h-<owner>`, `#h2h-<owner>-vs-<opp>`). It reads `src/matchups.json`, written at build time by `scripts/export_matchups.mjs` from Supabase (needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Netlify env). Empty until Yahoo sync runs; production shows an empty state, PR previews and `SAMPLE_H2H=1` builds show made-up games with a banner.
 - Owner-key migration applied (owners.yahoo_guid etc., teams.manager_guid). `yahoo-sync` v4 captures GUIDs.
 
 ## Next steps
 1. When Yahoo access works: `net.http_post` to `yahoo-sync?season=2025&parts=teams`, check team rows, manager GUIDs and the two Brendans; fill `owners.yahoo_guid`; backfill all seasons; validate against `data.js`; enable pg_cron nightly `?current=1`.
 2. Switch the UI from `data.js` to Supabase reads (supabase-js, anon key); deploy to Netlify.
-3. Head-to-head section (full treatment): rivalry grid, owner-vs-opponent pages, regular season vs playoffs, category W/L, season-by-season series, streaks, biggest blowout, last 10 meetings, nemesis/favorite opponent, filters. Built on `v_h2h`. 2004-05 excluded.
+3. Head-to-head: built. After the first matchup sync, check it against real data (category stat ids in `CATEGORIES`, playoff flag, owner mapping).
 4. Open questions: regular-season finish definition (Yahoo playoff seed vs own rule), display names for Pete/Nate/Owen/Erik/Brice/Will vs Yahoo, Yahoo logo file, shared password.
 
 ## Commands
-- Build preview: `NODE_PATH=<global node_modules> esbuild src/main.jsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV=\"production\" --outdir=dist && python3 build_preview.py`
+- Preview with sample H2H data: `SAMPLE_H2H=1 npm run dev`
+- Build preview: `NODE_PATH=<global node_modules> esbuild src/main.jsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV=\"production\" --define:__SAMPLE_H2H__=false --outdir=dist && python3 build_preview.py`
 - Normal build (with registry access): `npm install && npm run build`
 - Regenerate sheet data: `python3 scripts/parse_sheet.py` (from repo root)

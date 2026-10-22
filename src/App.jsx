@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as L from "./lib.js";
+import * as H from "./h2h.js";
 import { DRAFT } from "./data.js";
 
 const NAV = [
   ["", "Record book"],
   ["owners", "Owners"],
   ["seasons", "Seasons"],
+  ["h2h", "Head-to-head"],
   ["teams", "Teams"],
   ["draft", "Draft"],
 ];
@@ -23,6 +25,7 @@ function useHash() {
 function parseRoute(hash) {
   if (hash.startsWith("owner-")) return ["owner", hash.slice(6)];
   if (hash.startsWith("season-")) return ["seasons", parseInt(hash.slice(7), 10)];
+  if (hash.startsWith("h2h-")) return ["h2h", hash.slice(4)];
   return [hash, null];
 }
 
@@ -436,7 +439,10 @@ function OwnerPage({ slug, owners, countTies }) {
       <p className="crumb"><a href="#owners">All owners</a></p>
       <header className="page-head">
         <h1>{o.name}</h1>
-        <p className="lede">{o.seasons} seasons, {o.first} to {o.last}.</p>
+        <p className="lede">
+          {o.seasons} seasons, {o.first} to {o.last}.
+          {H.H2H_OWNERS.includes(o.name) && <> <a href={"#h2h-" + o.slug}>Head-to-head records</a></>}
+        </p>
       </header>
       <dl className="stats">
         {stat("Record", `${L.fmtInt(o.w)}-${L.fmtInt(o.l)}-${o.t}`, "wins, losses, ties", true)}
@@ -534,6 +540,357 @@ function SeasonsPage({ start, countTies }) {
         />
       </section>
     </>
+  );
+}
+
+// ---------- Head-to-head ----------
+const go = (hash) => { window.location.hash = hash; };
+const h2hHref = (owner, opp) => "#h2h-" + L.slug(owner) + (opp ? "-vs-" + L.slug(opp) : "");
+const H2HLink = ({ owner, opp, children }) => <a href={h2hHref(owner, opp)}>{children}</a>;
+const wlt = (t) => `${t.w}-${t.l}-${t.t}`;
+const cats = (t) => `${fmtCats(t.cf)}-${fmtCats(t.ca)}`;
+const fmtCats = (n) => (Number.isInteger(n) ? L.fmtInt(n) : n.toFixed(1));
+const meeting = (r) => `${H.seasonLabel(r.start)}, week ${r.week}${r.playoff ? ", playoffs" : ""}`;
+const Res = ({ res }) => <span className={"res res-" + res}>{res}</span>;
+const streakText = (s) => (s ? `${s.res === "W" ? "Won" : "Lost"} ${s.n}` : "-");
+
+// Shade a grid cell from loss color through neutral to win color.
+function cellTone(t) {
+  if (!t || !t.games || !Number.isFinite(t.pct)) return "";
+  const p = t.pct;
+  return p >= 62 ? "tone-w2" : p >= 53 ? "tone-w1" : p > 47 ? "tone-even" : p > 38 ? "tone-l1" : "tone-l2";
+}
+
+function H2HFilters({ filter, setFilter, children }) {
+  const seasons = H.H2H_SEASONS;
+  const set = (k) => (e) => setFilter({ ...filter, [k]: e.target.value === "" ? null : +e.target.value });
+  return (
+    <div className="controls">
+      {children}
+      <div className="field">
+        <span className="field-label">Games</span>
+        <Segmented
+          label="Which games to count"
+          value={filter.phase}
+          onChange={(phase) => setFilter({ ...filter, phase })}
+          options={[["all", "All"], ["reg", "Regular season"], ["playoff", "Playoffs"]]}
+        />
+      </div>
+      <Field id="h2h-from" label="From">
+        <select id="h2h-from" className="narrow" value={filter.from ?? ""} onChange={set("from")}>
+          <option value="">First season</option>
+          {seasons.map((s) => <option key={s} value={s}>{H.seasonLabel(s)}</option>)}
+        </select>
+      </Field>
+      <Field id="h2h-to" label="To">
+        <select id="h2h-to" className="narrow" value={filter.to ?? ""} onChange={set("to")}>
+          <option value="">Latest season</option>
+          {seasons.map((s) => <option key={s} value={s}>{H.seasonLabel(s)}</option>)}
+        </select>
+      </Field>
+    </div>
+  );
+}
+
+function OwnerPicker({ id, label, value, onChange, exclude, placeholder }) {
+  return (
+    <Field id={id} label={label}>
+      <select id={id} value={value || ""} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{placeholder}</option>
+        {H.H2H_OWNERS.filter((n) => n !== exclude).map((n) => <option key={n} value={n}>{n}</option>)}
+      </select>
+    </Field>
+  );
+}
+
+function H2HPage({ param, countTies, filter, setFilter }) {
+  const sides = useMemo(
+    () => H.filterSides({ phase: filter.phase, from: filter.from ?? -Infinity, to: filter.to ?? Infinity }),
+    [filter]
+  );
+  if (!H.HAS_DATA) {
+    return (
+      <>
+        <header className="page-head">
+          <h1>Head-to-head</h1>
+          <p className="lede">Every owner's record against every other owner, built from the weekly matchups.</p>
+        </header>
+        <p className="empty-note">
+          Weekly matchups come from Yahoo, so this section fills in once the Yahoo sync is running.
+          The spreadsheet only has season totals, and 2004-05 will not have head-to-head games.
+        </p>
+      </>
+    );
+  }
+  const [a, b] = (param || "").split("-vs-");
+  const owner = a ? H.ownerBySlug(a) : null;
+  const opp = b ? H.ownerBySlug(b) : null;
+  const shared = { sides, countTies, filter, setFilter };
+  if (owner && opp) return <RivalryView owner={owner} opp={opp} {...shared} />;
+  if (owner) return <OwnerH2HView owner={owner} {...shared} />;
+  return <LeagueH2HView {...shared} />;
+}
+
+function LeagueH2HView({ sides, countTies, filter, setFilter }) {
+  const grid = useMemo(() => H.rivalryGrid(sides, countTies), [sides, countTies]);
+  const owners = H.H2H_OWNERS.filter((n) => grid.has(n));
+  const streaks = H.longestRivalryStreaks(sides, 6);
+  const blowouts = H.biggestBlowouts(sides, 6);
+  const { mostPlayed, lopsided } = H.rivalryLists(grid, 10);
+  return (
+    <>
+      <header className="page-head">
+        <h1>Head-to-head</h1>
+        <p className="lede">Every owner's record against every other owner. Pick a cell to open that rivalry.</p>
+      </header>
+      <H2HFilters filter={filter} setFilter={setFilter}>
+        <OwnerPicker id="h2h-jump" label="Go to an owner" value="" onChange={(n) => n && go(h2hHref(n))} placeholder="Pick an owner" />
+      </H2HFilters>
+
+      <section aria-labelledby="grid-h">
+        <div className="section-head">
+          <h2 id="grid-h">Rivalry grid</h2>
+          <p className="hint">Read across: the row owner's wins, losses and ties against each column owner. Green means the row owner leads.</p>
+        </div>
+        <div className="tbl-wrap grid-wrap" tabIndex={0} aria-label="Rivalry grid, scrollable">
+          <table className="dt h2h-grid">
+            <caption className="sr">Head-to-head records, row owner against column owner</caption>
+            <thead>
+              <tr>
+                <th scope="col">Owner</th>
+                {owners.map((n) => <th key={n} scope="col" className="num">{n}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {owners.map((o) => (
+                <tr key={o}>
+                  <th scope="row"><H2HLink owner={o}>{o}</H2HLink></th>
+                  {owners.map((p) => {
+                    const t = grid.get(o).get(p);
+                    if (o === p) return <td key={p} className="num self" aria-label="Same owner" />;
+                    if (!t) return <td key={p} className="num dim">-</td>;
+                    return (
+                      <td key={p} className={"num cell " + cellTone(t)}>
+                        <a href={h2hHref(o, p)} title={`${o} vs ${p}: ${wlt(t)}, ${L.fmtPct(t.pct)}`}>{wlt(t)}</a>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="league-h2h-h">
+        <div className="section-head">
+          <h2 id="league-h2h-h">Rivalry records</h2>
+          <p className="hint">One-sided rivalries need at least 10 meetings.</p>
+        </div>
+        <div className="grid-2">
+          <Ledger
+            title="Most one-sided"
+            empty="No rivalry has 10 meetings in this range yet."
+            items={lopsided.map((r) => ({ main: <H2HLink owner={r.owner} opp={r.opp}>{r.owner} over {r.opp}</H2HLink>, val: L.fmtPct(r.pct), sub: `${wlt(r)} in ${r.games} meetings` }))}
+          />
+          <Ledger
+            title="Most played"
+            empty="No games in this range."
+            items={mostPlayed.map((r) => ({ main: <H2HLink owner={r.owner} opp={r.opp}>{r.owner} and {r.opp}</H2HLink>, val: r.games, sub: `${r.owner} leads ${wlt(r)}` }))}
+          />
+          <Ledger
+            title="Longest win streak in a rivalry"
+            empty="No one has won three straight against the same owner in this range."
+            items={streaks.map((s) => ({ main: <H2HLink owner={s.owner} opp={s.opp}>{s.owner} over {s.opp}</H2HLink>, val: s.n, sub: `${meeting(s.from)} to ${meeting(s.to)}${s.active ? ", still going" : ""}` }))}
+          />
+          <Ledger
+            title="Biggest blowouts"
+            empty="No games in this range."
+            items={blowouts.map((r) => ({ main: <H2HLink owner={r.owner} opp={r.opp}>{r.owner} over {r.opp}</H2HLink>, val: `${fmtCats(r.cf)}-${fmtCats(r.ca)}`, sub: meeting(r) }))}
+          />
+        </div>
+      </section>
+    </>
+  );
+}
+
+function OwnerH2HView({ owner, sides, countTies, filter, setFilter }) {
+  const [sort, onSort] = useSort("games");
+  const opps = useMemo(() => H.opponentsOf(owner, sides, countTies), [owner, sides, countTies]);
+  const total = opps.reduce((a, o) => ({ w: a.w + o.w, l: a.l + o.l, t: a.t + o.t, games: a.games + o.games }), { w: 0, l: 0, t: 0, games: 0 });
+  const { nemesis, favorite } = H.nemesisAndFavorite(opps, 8);
+  const rows = sortRows(opps.map((o) => ({ ...o, regPct: o.reg.pct, postGames: o.post.games, margin: o.cf - o.ca, lastStart: o.last.start * 100 + o.last.week })), sort);
+  return (
+    <>
+      <p className="crumb"><a href="#h2h">All head-to-head</a> <span className="dim">·</span> <a href={"#owner-" + L.slug(owner)}>{owner}'s profile</a></p>
+      <header className="page-head">
+        <h1>{owner}: head-to-head</h1>
+        <p className="lede">{owner}'s record against every owner they have faced.</p>
+      </header>
+      <H2HFilters filter={filter} setFilter={setFilter}>
+        <OwnerPicker id="h2h-owner" label="Owner" value={owner} onChange={(n) => n && go(h2hHref(n))} placeholder="Pick an owner" />
+        <OwnerPicker id="h2h-opp" label="Compare with" value="" exclude={owner} onChange={(n) => n && go(h2hHref(owner, n))} placeholder="Pick an opponent" />
+      </H2HFilters>
+      <dl className="stats">
+        <Stat label="Record" value={wlt(total)} sub={`${total.games} games`} wide />
+        <Stat label="Win %" value={L.fmtPct(L.winPct(total.w, total.l, total.t, countTies))} />
+        <Stat label="Nemesis" value={nemesis ? <H2HLink owner={owner} opp={nemesis.opp}>{nemesis.opp}</H2HLink> : "-"} sub={nemesis ? `${wlt(nemesis)}, ${L.fmtPct(nemesis.pct)}` : "8 or more meetings"} />
+        <Stat label="Favorite opponent" value={favorite ? <H2HLink owner={owner} opp={favorite.opp}>{favorite.opp}</H2HLink> : "-"} sub={favorite ? `${wlt(favorite)}, ${L.fmtPct(favorite.pct)}` : "8 or more meetings"} />
+      </dl>
+      <section aria-labelledby="opps-h">
+        <div className="section-head"><h2 id="opps-h">Against each owner</h2></div>
+        <DataTable
+          caption={`${owner} against each owner`}
+          sort={sort}
+          onSort={onSort}
+          rowKey={(r) => r.opp}
+          rows={rows}
+          columns={[
+            { key: "opp", label: "Opponent", render: (r) => <H2HLink owner={owner} opp={r.opp}>{r.opp}</H2HLink> },
+            { key: "games", label: "Games", num: true },
+            { key: "w", label: "Record", num: true, render: wlt },
+            { key: "pct", label: "Win %", num: true, render: (r) => L.fmtPct(r.pct) },
+            { key: "regPct", label: "Regular season", num: true, render: (r) => wlt(r.reg) },
+            { key: "postGames", label: "Playoffs", num: true, render: (r) => (r.post.games ? wlt(r.post) : <span className="dim">-</span>) },
+            { key: "margin", label: "Categories", num: true, render: cats },
+            { key: "streak", label: "Streak", sortable: false, render: (r) => streakText(r.streak) },
+            { key: "lastStart", label: "Last met", num: true, render: (r) => meeting(r.last) },
+          ]}
+        />
+      </section>
+    </>
+  );
+}
+
+function Stat({ label, value, sub, wide }) {
+  return (
+    <div className={"stat" + (wide ? " stat-wide" : "")}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+      {sub && <dd className="stat-sub">{sub}</dd>}
+    </div>
+  );
+}
+
+function RivalryView({ owner, opp, sides, countTies, filter, setFilter }) {
+  const r = useMemo(() => H.rivalry(owner, opp, sides, countTies), [owner, opp, sides, countTies]);
+  const [sort, onSort] = useSort("start");
+  const seasonRows = sortRows(r.seasons, sort);
+  const run = (s, who) => (s ? { main: `${who}: ${s.n} straight`, val: s.n, sub: `${meeting(s.from)} to ${meeting(s.to)}` } : { main: `${who}: no wins`, val: "-", sub: "" });
+  const blow = (g, who) => (g ? { main: `${who}'s biggest win`, val: `${fmtCats(Math.max(g.cf, g.ca))}-${fmtCats(Math.min(g.cf, g.ca))}`, sub: meeting(g) } : null);
+  return (
+    <>
+      <p className="crumb"><a href="#h2h">All head-to-head</a> <span className="dim">·</span> <H2HLink owner={owner}>{owner}'s rivalries</H2HLink></p>
+      <header className="page-head">
+        <h1>{owner} vs {opp}</h1>
+        <p className="lede">
+          {r.all.games
+            ? `${r.all.games} meetings from ${H.seasonLabel(r.rows[0].start)} to ${H.seasonLabel(r.rows[r.rows.length - 1].start)}. Records are from ${owner}'s side.`
+            : "These two have not met in the games and seasons picked below."}
+          {" "}<a href={h2hHref(opp, owner)}>Flip sides</a>
+        </p>
+      </header>
+      <H2HFilters filter={filter} setFilter={setFilter}>
+        <OwnerPicker id="riv-a" label="Owner" value={owner} exclude={opp} onChange={(n) => n && go(h2hHref(n, opp))} placeholder="Pick an owner" />
+        <OwnerPicker id="riv-b" label="Opponent" value={opp} exclude={owner} onChange={(n) => n && go(h2hHref(owner, n))} placeholder="Pick an opponent" />
+      </H2HFilters>
+      {r.all.games > 0 && (
+        <>
+          <dl className="stats">
+            <Stat label="Series" value={wlt(r.all)} sub="wins, losses, ties" wide />
+            <Stat label="Win %" value={L.fmtPct(r.all.pct)} />
+            <Stat label="Regular season" value={wlt(r.reg)} />
+            <Stat label="Playoffs" value={r.post.games ? wlt(r.post) : "-"} sub={r.post.games ? `${r.post.games} meetings` : "never met"} />
+            <Stat label="Categories won" value={cats(r.all)} />
+            <Stat label="Current streak" value={streakText(r.streak)} sub={r.streak ? `for ${owner}` : "last game was a tie"} />
+          </dl>
+
+          <section aria-labelledby="riv-seasons-h">
+            <div className="section-head"><h2 id="riv-seasons-h">Season by season</h2></div>
+            <DataTable
+              caption={`${owner} vs ${opp} by season`}
+              sort={sort}
+              onSort={onSort}
+              rowKey={(x) => x.start}
+              rows={seasonRows}
+              columns={[
+                { key: "start", label: "Season", render: (x) => <a href={"#season-" + x.start}>{x.season}</a> },
+                { key: "w", label: "Record", num: true, render: wlt },
+                { key: "pct", label: "Win %", num: true, render: (x) => L.fmtPct(x.pct) },
+                { key: "cf", label: "Categories", num: true, render: cats },
+                { key: "playoffGames", label: "Playoff meetings", num: true, render: (x) => x.playoffGames || <span className="dim">-</span> },
+                { key: "games", label: "Weeks", sortable: false, render: (x) => <span className="res-run">{x.games.map((g, i) => <Res key={i} res={g.res} />)}</span> },
+              ]}
+            />
+          </section>
+
+          <section aria-labelledby="riv-moments-h">
+            <div className="section-head"><h2 id="riv-moments-h">Streaks and blowouts</h2></div>
+            <div className="grid-2">
+              <Ledger title="Longest win streaks" items={[run(r.bestRun, owner), run(r.oppBestRun, opp)]} />
+              <Ledger
+                title="Biggest wins"
+                empty="Every meeting has been a tie."
+                items={[blow(r.bigWin, owner), blow(r.bigLoss, opp)].filter(Boolean)}
+              />
+            </div>
+          </section>
+
+          {r.categories.length > 0 && (
+            <section aria-labelledby="riv-cats-h">
+              <div className="section-head">
+                <h2 id="riv-cats-h">Category by category</h2>
+                <p className="hint">Each week's nine categories, counted across every meeting. Fewer turnovers wins TO.</p>
+              </div>
+              <DataTable
+                caption={`${owner} vs ${opp} by category`}
+                rowKey={(c) => c.id}
+                rows={r.categories}
+                columns={[
+                  { key: "label", label: "Category" },
+                  { key: "w", label: `${owner} won`, num: true },
+                  { key: "l", label: `${opp} won`, num: true },
+                  { key: "t", label: "Tied", num: true },
+                  { key: "edge", label: "Edge", render: (c) => (c.w === c.l ? <span className="dim">Even</span> : <strong>{c.w > c.l ? owner : opp} +{Math.abs(c.w - c.l)}</strong>) },
+                ]}
+              />
+            </section>
+          )}
+
+          <section aria-labelledby="riv-last-h">
+            <div className="section-head">
+              <h2 id="riv-last-h">Last 10 meetings</h2>
+              <p className="hint">Newest first. Score is categories won.</p>
+            </div>
+            <MeetingList rows={r.last10} owner={owner} opp={opp} />
+          </section>
+
+          {r.playoffGames.length > 0 && (
+            <section aria-labelledby="riv-po-h">
+              <div className="section-head"><h2 id="riv-po-h">Playoff meetings</h2></div>
+              <MeetingList rows={r.playoffGames} owner={owner} opp={opp} />
+            </section>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+
+function MeetingList({ rows, owner, opp }) {
+  return (
+    <DataTable
+      caption={`Meetings between ${owner} and ${opp}`}
+      rowKey={(g) => g.start + "-" + g.week}
+      rows={rows}
+      columns={[
+        { key: "res", label: "Result", render: (g) => <Res res={g.res} /> },
+        { key: "cf", label: "Score", num: true, render: (g) => `${fmtCats(g.cf)}-${fmtCats(g.ca)}` },
+        { key: "when", label: "When", render: meeting },
+        { key: "team", label: `${owner}'s team` },
+        { key: "oppTeam", label: `${opp}'s team` },
+      ]}
+    />
   );
 }
 
@@ -648,6 +1005,7 @@ export default function App() {
   const hash = useHash();
   const [countTies, setCountTies] = useState(false);
   const owners = useMemo(() => L.buildOwners(countTies), [countTies]);
+  const [h2hFilter, setH2hFilter] = useState({ phase: "all", from: null, to: null });
   const [route, param] = parseRoute(hash);
   useEffect(() => { window.scrollTo(0, 0); }, [hash]);
   const active = route === "owner" ? "owners" : route;
@@ -656,6 +1014,7 @@ export default function App() {
   if (route === "owner") page = <OwnerPage slug={param} owners={owners} countTies={countTies} />;
   else if (route === "owners") page = <OwnersPage owners={owners} countTies={countTies} />;
   else if (route === "seasons") page = <SeasonsPage start={param} countTies={countTies} />;
+  else if (route === "h2h") page = <H2HPage param={param} countTies={countTies} filter={h2hFilter} setFilter={setH2hFilter} />;
   else if (route === "teams") page = <TeamsPage countTies={countTies} />;
   else if (route === "draft") page = <DraftPage />;
   else page = <RecordBook owners={owners} countTies={countTies} />;
@@ -681,6 +1040,11 @@ export default function App() {
       <p className="notice">
         Preview with data from the commissioner's spreadsheet through 2025-26. It switches to live Yahoo data once access is approved.
       </p>
+      {H.IS_SAMPLE && (
+        <p className="notice notice-sample">
+          Head-to-head numbers on this preview are made up so the pages can be tried out. Real matchups load from Yahoo.
+        </p>
+      )}
       <main>{page}</main>
       <footer className="foot">
         <p>Fantasy data provided by Yahoo Fantasy</p>

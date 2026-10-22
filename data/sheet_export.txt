@@ -1,0 +1,744 @@
+## Sheet name: Record Book
+Regular Season Titles,Tournament / League Titles,,Sweeps (Reg & Tourn Titles),,,Total Wins,,,,Avg Wins,,,,,W,L,W%,,,,Regular Season Stats (Category)
+Craig (5),Smy (6),,Smy - 2,2016 & 2019,,1,Scotty,"2,429",--,Scotty,116,,1,Scotty,"2,429","1,986",55.02%,,,,Top 5 Winning %
+"Smy, Klink (3)",Craig (4),,Craig - 2,2018 & 2022,,2,Craig,"2,365",-64,Craig,113,,2,Craig,"2,365","2,065",53.39%,,,,Owner,Winning %,Season
+"Scotty, Cowan, AK, Aaron (2)",AK (3),,Klink - 1,2005,,3,Smy,"2,360",-5,Nate,113,,3,Smy,"2,360","2,066",53.32%,,,,Scotty,69.70%,2024
+"Nate, Owen, Pete (1)",Pete & Nate (2),,,,,4,Aaron,"2,331",-29,Smy,112,,4,Nate*,"1,576","1,396",53.03%,,,,AK,68.18%,2015
+,"G.A., Brendan, Klink, Owen, Scotty (1)",,Repeat Champs,Reg.Season,,5,Klink,"2,167",-164,Aaron,111,,5,Aaron,"2,331","2,092",52.70%,,,,Scotty,66.67%,2008
+,,,Cowan,2011-2012,,6,AK,"2,161",-6,AK,108,,6,AK,"2,161","2,058",51.22%,,,,AK,64.65%,2024
+Regular Season - Runner Up,Tournament / League - Runner Up,,Craig,2022-2023,,7,Cowan,"2,031",-130,Brendan,108,,7,Brendan,"1,836","1,764",51.00%,,,,Craig,62.34%,2013
+"Smy, Scotty, & Nate (4 Each)",Aaron (6),,,,,8,Drewber,"1,973",-58,Klink,103,,8,Klink,"2,167","2,260",48.95%
+AK (3),Scotty (5),,Repeat Champs,Tourn/League,,9,Owen*,"1,938",-35,Owen,102,,9,Owen*,"1,938","2,079",48.24%,,,,Top 5 Win Totals
+Cowan & Aaron (2 Each),AK (3),,Smy (2x),2007-08 & 2019-20,,10,Brendan,"1,836",-102,Drewber,99,,10,Drewber,"1,973","2,230",46.94%,,,,Owner,Wins,Season
+"G.A., Pete, Craig (1 Each)","Smy, Cowan & Klink (2 Each)",,Craig,2017-18,,11,Nate*,"1,576",-260,Pete,99,,11,Pete*,"1,379","1,599",46.31%,,,,Scotty,154,2008
+,"Nate, Owen (1 each)",,,,,12,Pete*,"1,379",-197,Cowan,97,,12,Cowan,"2,031","2,381",46.03%,,,,AK,150,2015
+Regular Season - 3rd Place,Tournament / League - 3rd Place,,Streak - Consecutive Years Placed,,,*Minimum 10 Seasons | *Retired,,,,,,,Minimum 10 Seasons | *Retired,,,,,,,,Craig,144,2013
+Craig (6),Craig (7),,Craig - 8  (Reg),2019 - 2026,,,,,,,,,,,,,,,,,Smy,143,2010
+Brendan (4),Nate (4),,Smy - 4 (Reg),2008 - 2011,,Total Losses,,,,Avg Losses,,,,,,,,,,,Cowan,142,2013
+"Aaron, Owen, Pete, Scotty & Smy (2 Each)",Klink (3),,,,,1,Cowan,"2,381",--,Pete,114
+"AK, Nate (1 Each)","AK, Pete (2 Each)",,Craig - 7 (Post),2018 - 2024,,2,Klink,"2,260",-121,Cowan,113
+,"Aaron, Cowan, Owen, Smy (1 Each)",,Klink - 3 (Post),2021 - 2023,,3,Drewber,"2,230",-30,Drewber,112
+Regular Season - Times Placed,Tourney/League - Times Placed,,,,,4,Aaron,"2,092",-138,Owen,109
+Craig 11 / 21 (52%),Craig 11 / 21 (52%),,Seasons Played,,,5,Owen*,"2,079",-13,Klink,108
+Smy 9 / 21 (43%),Smy 9 / 21 (43%),,Aaron,22,,6,Smy,"2,066",-13,Brendan,104
+Nate 6 / 14 (43%),Nate 7 / 14 (50%),,Cowan,22,,7,Craig,"2,065",-1,AK,103
+AK 5 / 20 (25%),AK 7 / 20 (35%),,Craig,22,,8,AK,"2,058",-7,Nate,100
+Aaron 6 / 21 (29%),Aaron 7 / 21,,Klink,22,,9,Scotty,"1,986",-72,Aaron,100
+Scotty 8 / 21 (38%),Scotty 6 / 21 (29%),,Scotty,22,,10,Brendan,"1,764",-222,Smy,98
+Klink 2 / 21 (10%),Klink 5 / 21 (24%),,Smy,22,,11,Pete*,"1,599",-165,Craig,98
+Pete 4 / 14 (29%),Pete 4 / 14 (29%),,AK,21,,12,Nate*,"1,396",-203,Scotty,95
+Cowan 4 / 21 (19%),Cowan 3 / 21 (14%),,Drewber*,21,,*Minimum 10 Seasons | *Retired
+Owen 3 / 19 (16%),Owen 3 / 19 (16%),,Owen,19
+Brendan 4 / 17 (24%),Brendan 1 / 17 (6%),,Brendan,18
+GA 1 / 8 (13%),GA 0 / 8 (0%),,Nate,14
+,,,Pete,14
+,,,G.A.,9
+,,,Evan*,8
+,,,Brice*,4
+,,,Will*,2
+,,,B. Patnode,1
+,,,Erik*,1
+,,,* Never Placed
+
+## Sheet name: Sheet8
+Total Seasons,22
+
+## Sheet name: Reg/Tournament Champs
+,Regular Season,,,Tournament & League,,,,,,,,,,,,Bruce's Wife-to-Success Correlation
+Year,1st,2nd,3rd,1st,2nd,3rd,,,,,,,,,,Year,Wife/Status,Summary
+2005,Pete,Scotty,Craig,Craig,Aaron,Pete,,,,,,,,,,2004,Wife 1,Wife 1 Summary (3)
+2006,Klink,Aaron,AK,Klink,Aaron,Cowan,,,,,,,,,,2005,Wife 1,1 League/Tourney Title
+2007,Aaron,Nate,Scotty,Nate,Aaron,Smy,,,,,,,,,,2006,Wife 1,1 League/Tourney - 3rd Place
+2008,AK,Cowan,Smy,Smy,AK,Craig,,,,,,,,,,2007,Wife 1,1 Reg Season - 3rd Place
+2009,Scotty,Smy,Nate,Smy,Scotty,Nate,,,,,,,,,,2008,Wife 1
+2010,Craig,Smy,Pete,Pete,Owen,Craig,,,,,,,,,,2009,Divorce - Drama,Divorce/Drama/Single (7)
+2011,Smy,Nate,Scotty,AK,Smy,Nate,,,,,,,,,,2010,Wife 2,3 Reg Season Titles
+2012,Cowan,Pete,Brendan,Brendan,Cowan,Pete,,,,,,,,,,2011,Wife 2,1 Reg Season - Runner up
+2013,Cowan,Nate,Brendan,Nate,Scotty,Klink,,,,,,,,,,2012,Divorce - Drama,1 League/Tourney Title
+2014,Craig,Cowan,Aaron,AK,Aaron,Craig,,,,,,,,,,2013,Single,2 League/Tourney - 3rd Place
+2015,Aaron,Craig,Owen,Owen,Aaron,Nate,,,,,,,,,,2014,Single
+2016,AK,Scotty,Pete,Pete,Scotty,AK,,,,,,,,,,2015,Wife 3,Wife 2 Summary (0)
+2017,Smy,Nate,Owen,Smy,Nate,Owen,,,,,,,,,,2016,Wife 3,"Fuck her, shut out"
+2018,Nate,AK,Aaron,Craig,AK,Nate,,,,,,,,,,2017,Wife 3
+2019,Craig,Aaron,Smy,Craig,Aaron,AK,,,,,,,,,,2018,Divorce - Drama,Wife 3 Summary (1)
+2020,Smy,Scotty,Craig,Smy,Scotty,Craig,,,,,,,,,,2019,Wife 4,"Cheating Whore, 1 League/Tourney Title"
+2021,Klink,Smy,Craig,Smy,Klink,Craig,,,,,,,,,,2020,Wife 4
+2022,Owen,Scotty,Craig,Scotty,Klink,Craig,,,,,,,,,,2021,Wife 4,Wife 4 Summary (11)
+2023,Craig,Smy,Brendan,Craig,Smy,Klink,,,,,,,,,,2022,Wife 4,2 Reg Season Titles
+2024,Craig,G.A.,Brendan,Smy,Cowan,Craig,,,,,,,,,,2023,Wife 4,4 Reg Season - 3rd Place
+2025,Scotty,AK,Craig,AK,Scotty,Aaron,,,,,,,,,,2024,Wife 4,1 League/Tourney Title
+2026,Klink,AK,Craig,G.A.,AK,Klink,,,,,,,,,,2025,Wife 4,4 League Tourney - 3rd Place
+
+## Sheet name: Totals
+,Aaron,Cowan,Craig,Klink,Scotty,Smy,AK,Drewber,Owen,Brendan,Nate,Pete,G.A.,Evan,Brice,Will,Erik
+Seasons,21,21,21,21,21,21,20,20,19,17,14,14,8,7,4,2,1
+Total Wins,"2,331","2,031","2,365","2,167","2,429","2,360","2,161","1,973","1,938","1,836","1,576","1,379",737,624,353,166,121
+Avg Wins,111,97,113,103,116,112,108,99,102,108,113,99,92,89,88,83,121
+Win %,50.70%,44.17%,51.44%,47.13%,52.83%,51.33%,49.48%,45.18%,46.73%,49.82%,50.45%,44.14%,42.95%,42.33%,38.66%,37.73%,52.38%
+Total Losses,"2,092","2,381","2,065","2,260","1,986","2,066","2,058","2,230","2,079","1,764","1,396","1,599",898,833,478,268,94
+Avg Losses,100,113,98,108,95,98,103,112,109,104,100,114,112,119,120,134,94
+Loss %,45.50%,51.78%,44.91%,49.15%,43.19%,44.93%,47.13%,51.06%,50.13%,47.87%,44.69%,51.18%,52.33%,56.51%,52.35%,60.91%,40.69%
+Ties,175,186,168,171,183,172,148,164,130,85,152,146,81,17,82,6,16
+Avg Ties,8.3,8.9,8.0,8.1,8.7,8.2,7.4,8.2,6.8,5.0,10.9,10.4,10.1,2.4,20.5,3.0,16.0
+Totals,"4,598","4,598","4,598","4,598","4,598","4,598","4,367","4,367","4,147","3,685","3,124","3,124","1,716","1,474",913,440,231
+
+,Total Losses,Avg Losses
+Cowan,"2,381",Pete,114
+Klink,"2,260",Cowan,113
+Drewber,"2,230",Drewber,112
+Aaron,"2,092",Owen,109
+Owen,"2,079",Klink,108
+Smy,"2,066",Brendan,104
+Craig,"2,065",AK,103
+AK,"2,058",Nate,100
+Scotty,"1,986",Aaron,100
+Brendan,"1,764",Smy,98
+Pete,"1,599",Craig,98
+Nate,"1,396",Scotty,95
+
+## Sheet name: Group by Owner
+Owner,Year,Team Name,W,L,T,W%
+Pete,2004,The Pistols,131,81,19,56.71%
+Scotty,2004,Afromen,130,86,15,56.28%
+Craig,2004,Da Bulls,128,82,21,55.41%
+Erik,2004,Quique's Crew ;-),121,94,16,52.38%
+Aaron,2004,The Airmen,119,92,20,51.52%
+Nate,2004,The Matheletes,113,100,18,48.92%
+Owen,2004,Ginas Lover Boys,105,110,16,45.45%
+Klink,2004,The Milwaukee Redds,97,114,20,41.99%
+Smy,2004,West Allis Smeagols,90,116,25,38.96%
+Cowan,2004,The 3 Point Club,83,125,23,35.93%
+Brice,2004,The Master,77,134,20,33.33%
+G.A.,2004,The Kobe Bryant Show,76,136,19,32.90%
+Klink,2005,The Milwaukee Redds,121,82,17,55.00%
+Aaron,2005,The Airmen,115,81,24,52.27%
+AK,2005,Da Piiimps,112,90,18,50.91%
+Drewber,2005,THE FRESHMAN,111,80,29,50.45%
+Cowan,2005,Three Point Club,109,90,21,49.55%
+Scotty,2005,Afromen,106,92,22,48.18%
+Smy,2005,Fightin' Smeagols,103,97,20,46.82%
+Brice,2005,The Master,99,100,21,45.00%
+Craig,2005,Da Bulls,79,118,23,35.91%
+Nate,2005,The Matheletes,78,119,23,35.45%
+Pete,2005,The Pistols,77,121,22,35.00%
+G.A.,2005,The Kobe Bryant Show,77,117,26,35.00%
+Aaron,2006,The Airmen,124,87,20,53.68%
+Nate,2006,The Matheletes,121,92,18,52.38%
+Scotty,2006,Afromen,115,97,19,49.78%
+Smy,2006,Sons of Norman Dale,112,100,19,48.48%
+Pete,2006,The Pistols,111,102,18,48.05%
+Craig,2006,Da Bulls,107,107,17,46.32%
+AK,2006,Trey Bombers,100,112,19,43.29%
+G.A.,2006,The Kobe Bryant Show,100,112,19,43.29%
+Brice,2006,The Master,99,114,18,42.86%
+Klink,2006,The Milwaukee Redds,97,117,17,41.99%
+Cowan,2006,The Three Point Club,94,115,22,40.69%
+Drewber,2006,The Frosh lives on,92,117,22,39.83%
+AK,2007,Dime Droppers,134,74,23,58.01%
+Cowan,2007,Three Point Club,134,77,20,58.01%
+Smy,2007,Return of Coach Dale,129,84,18,55.84%
+Craig,2007,Da Bulls,126,85,20,54.55%
+Drewber,2007,The Frosh Lives on..,114,94,23,49.35%
+Nate,2007,The Mathletes,105,104,22,45.45%
+Pete,2007,Petey's Pistols,103,107,21,44.59%
+Owen,2007,GLB,97,106,28,41.99%
+Scotty,2007,Afromen,91,118,22,39.39%
+Aaron,2007,Airmen,88,120,23,38.10%
+Brice,2007,The Master,78,130,23,33.77%
+Klink,2007,The Milwaukee Redds,55,155,21,23.81%
+Scotty,2008,Afromen,154,57,20,66.67%
+Smy,2008,Defense of Coach D.,125,84,22,54.11%
+Nate,2008,The Mathletes,119,89,23,51.52%
+Pete,2008,Pippin's Pistols,119,93,19,51.52%
+Brendan,2008,Shake'n Bake,108,100,23,46.75%
+Craig,2008,DAAAA Bullzzzz,100,112,19,43.29%
+Drewber,2008,The Frosh Lives On..,100,111,20,43.29%
+AK,2008,Sleeper,98,108,25,42.42%
+Aaron,2008,Airmen,95,118,18,41.13%
+Klink,2008,The Milwaukee Redds,93,114,24,40.26%
+Owen,2008,The Big O's,91,116,24,39.39%
+Cowan,2008,Three Point Club,56,156,19,24.24%
+Craig,2009,John Wall Owns You!,130,78,23,56.28%
+Smy,2009,Norman Dale Returns,122,87,22,52.81%
+Pete,2009,Petey's Pistols,120,88,23,51.95%
+Scotty,2009,Afromen,111,96,24,48.05%
+Owen,2009,The Big O's,109,100,22,47.19%
+AK,2009,Brook Freakin Lopez!,107,104,20,46.32%
+Drewber,2009,The Frosh Lives On..,104,101,26,45.02%
+Brendan,2009,Shake'n Bake,103,104,24,44.59%
+Aaron,2009,Airmen,99,108,24,42.86%
+Nate,2009,Mathletes,87,121,23,37.66%
+Klink,2009,The Milwaukee Redds,86,122,23,37.23%
+Cowan,2009,Three Point Club,69,138,24,29.87%
+Smy,2010,El Ron the Elf,143,86,2,61.90%
+Nate,2010,The Mathletes,134,90,7,58.01%
+Scotty,2010,Afromen,133,93,5,57.58%
+Aaron,2010,Airmen,129,97,5,55.84%
+Brendan,2010,Quad Duces,125,102,4,54.11%
+AK,2010,The Holiday Boozers,118,109,4,51.08%
+Klink,2010,The Milwaukee Redds,115,113,3,49.78%
+Craig,2010,John Wall Dance,107,119,5,46.32%
+Owen,2010,The Big O's,103,126,2,44.59%
+Cowan,2010,Three Point Club,96,130,5,41.56%
+Drewber,2010,The Frosh Lives On..,89,139,3,38.53%
+Pete,2010,Petey's Pistols,70,158,3,30.30%
+Cowan,2011,Three Point Club,90,60,4,58.44%
+Pete,2011,Petey's Pistols,86,62,6,55.84%
+Brendan,2011,Quad Duces,86,67,1,55.84%
+Scotty,2011,Afromen,85,67,2,55.19%
+Nate,2011,The Mathletes,81,72,1,52.60%
+Klink,2011,Klanks,79,72,3,51.30%
+Smy,2011,Rontanamo Bay,75,77,2,48.70%
+Owen,2011,The Big O's,73,81,0,47.40%
+Drewber,2011,CaddyShaq,68,83,3,44.16%
+Craig,2011,JWD,66,88,0,42.86%
+AK,2011,Sandusky's Boys,64,89,1,41.56%
+Aaron,2011,Airmen,59,94,1,38.31%
+Cowan,2012,Three Point Club,139,91,1,60.17%
+Nate,2012,The Mathletes,134,92,5,58.01%
+Brendan,2012,Quad Duces,129,100,2,55.84%
+Smy,2012,Rontanamo Bay,127,102,2,54.98%
+Scotty,2012,Afromen,122,104,5,52.81%
+Klink,2012,Klanks,120,108,3,51.95%
+Aaron,2012,Airmen,119,109,3,51.52%
+Owen,2012,The Big Ersanity!!!!,108,121,2,46.75%
+Drewber,2012,CaddyShaq,105,124,2,45.45%
+Craig,2012,FearTheBrow,100,131,0,43.29%
+Pete,2012,Petey's Pistols,100,129,2,43.29%
+AK,2012,Koenig,69,161,1,29.87%
+Craig,2013,Feel_my_ENES,144,82,5,62.34%
+Cowan,2013,Three Point Club,142,83,6,61.47%
+Aaron,2013,Airmen,137,91,3,59.31%
+AK,2013,Koenig,131,95,5,56.71%
+Nate,2013,The Mathletes,122,106,3,52.81%
+Smy,2013,Zombie Coach Dale,118,110,3,51.08%
+Brendan,2013,Quad Duces,109,121,1,47.19%
+Owen,2013,The Big Ersanity!!!!,106,123,2,45.89%
+Pete,2013,Petey's Pistols,100,131,0,43.29%
+Drewber,2013,CaddyShaq,87,140,4,37.66%
+Klink,2013,Klanks,85,142,4,36.80%
+Scotty,2013,Afromen,85,142,4,36.80%
+Aaron,2014,Airmen,139,91,1,60.17%
+Craig,2014,Cals One N Dones,122,106,3,52.81%
+Owen,2014,Kitty Puss Puss III,120,108,3,51.95%
+Nate,2014,The Mathletes,120,109,2,51.95%
+Brendan,2014,Quad Duces,119,109,3,51.52%
+Cowan,2014,Three Point Club,116,111,4,50.22%
+Klink,2014,Klanks,114,115,2,49.35%
+Drewber,2014,CaddyShaq,112,116,3,48.48%
+AK,2014,Koenig,111,115,5,48.05%
+Scotty,2014,Afromen,104,121,6,45.02%
+Pete,2014,Petey's Pistols,99,130,2,42.86%
+Smy,2014,Bye Week-Im that bad,91,136,4,39.39%
+AK,2015,Koenig,150,68,2,68.18%
+Scotty,2015,Afromen,131,87,2,59.55%
+Pete,2015,Petey's Pistols,119,99,2,54.09%
+Aaron,2015,Airmen,119,95,6,54.09%
+Brendan,2015,Quad Duces,116,102,2,52.73%
+Drewber,2015,CaddyShaq,112,103,5,50.91%
+Klink,2015,Case of the Mudiays,102,117,1,46.36%
+Owen,2015,Kitty Puss Puss III,98,119,3,44.55%
+Smy,2015,Coach Dale Reboot,97,117,6,44.09%
+Nate,2015,The Mathletes,88,129,3,40.00%
+Cowan,2015,Three Point Club,87,128,5,39.55%
+Craig,2015,F ing Autodraft $#!@,82,137,1,37.27%
+Smy,2016,Return to Greatness,135,81,4,61.36%
+Nate,2016,The Mathletes,134,84,2,60.91%
+Owen,2016,Kitty Puss Puss III,127,91,2,57.73%
+Aaron,2016,Airmen,120,98,2,54.55%
+Scotty,2016,Afromen,123,95,2,55.91%
+Brendan,2016,Quad Duces,112,106,2,50.91%
+Craig,2016,Fear the Brow,105,114,1,47.73%
+Drewber,2016,CaddyShaq,98,119,3,44.55%
+Klink,2016,Klink Redemption,101,113,6,45.91%
+Cowan,2016,Three Point Club,95,120,5,43.18%
+AK,2016,Dumpster Fire,90,128,2,40.91%
+Pete,2016,Petey's Pistols,63,154,3,28.64%
+Nate,2017,The Mathletes,140,89,2,60.61%
+AK,2017,Im Greekin Out Man,137,89,5,59.31%
+Aaron,2017,Airmen,134,95,2,58.01%
+Craig,2017,Big KAT!,130,97,4,56.28%
+Brendan,2017,Quad Duces,129,101,1,55.84%
+Owen,2017,Kitty Puss Puss III,125,104,2,54.11%
+Scotty,2017,Afromen,119,109,3,51.52%
+Klink,2017,Klink and the F Ups,113,115,3,48.92%
+Drewber,2017,CaddyShaq,91,139,1,39.39%
+Smy,2017,Return to Greatness,88,142,1,38.10%
+Cowan,2017,Three Point Club,82,145,4,35.50%
+Pete,2017,Petey's Pistols,81,144,6,35.06%
+Craig,2018,Señor Crappy Draft,132,95,4,57.14%
+Aaron,2018,Airmen,131,95,5,56.71%
+Smy,2018,Norm Dale Disciples,131,96,4,56.71%
+Scotty,2018,Afromen,124,101,6,53.68%
+Klink,2018,Klink,124,102,5,53.68%
+AK,2018,Im Greekin Out Man,122,106,3,52.81%
+Brendan,2018,Quad Duces,120,107,4,51.95%
+Drewber,2018,CaddyShaq,107,120,4,46.32%
+Evan,2018,Rebuilding Year,96,133,2,41.56%
+Cowan,2018,Three Point Club,94,132,5,40.69%
+Will,2018,Get Off My Lonzo,91,135,5,39.39%
+Owen,2018,Kitty Puss Puss III,89,139,3,38.53%
+Smy,2019,Norm Dale Disciples,128,77,4,61.24%
+Scotty,2019,Afromen,125,80,4,59.81%
+Craig,2019,ThreePeat!,115,88,6,55.02%
+Owen,2019,Kitty Puss Puss III,113,91,5,54.07%
+Klink,2019,Klink,113,96,0,54.07%
+Evan,2019,Rebuilding Year,111,94,4,53.11%
+AK,2019,IR Thirsty,102,105,2,48.80%
+Drewber,2019,CaddyShaq,102,106,1,48.80%
+Aaron,2019,Airmen,95,109,5,45.45%
+Cowan,2019,Three Point Club,79,126,4,37.80%
+Brendan,2019,Quad Duces,77,130,2,36.84%
+Will,2019,Get Off My Lonzo,75,133,1,35.89%
+Klink,2020,Klink,115,69,3,61.50%
+Smy,2020,Norm Dale Disciples,106,78,3,56.68%
+Craig,2020,BBNBA,106,78,3,56.68%
+Evan,2020,Kyries Flat Earthers,104,82,1,55.61%
+Aaron,2020,Airmen,96,87,4,51.34%
+Drewber,2020,CaddyShaq,93,90,4,49.73%
+G.A.,2020,Ilyasoldiers,93,91,3,49.73%
+Scotty,2020,Afromen,88,92,7,47.06%
+Cowan,2020,Three Point Club,88,97,2,47.06%
+AK,2020,IR Thirsty,80,101,6,42.78%
+Brendan,2020,Quad Duces,73,112,2,39.04%
+Owen,2020,Kitty Puss Puss III,59,124,4,31.55%
+Owen,2021,Bismacks Bisquicks,135,94,2,58.44%
+Scotty,2021,Afromen,134,95,2,58.01%
+Craig,2021,BBNBA,131,94,6,56.71%
+AK,2021,IR Thirsty,131,98,2,56.71%
+Smy,2021,Norm Dale Disciples,125,105,1,54.11%
+Klink,2021,Klink,124,101,6,53.68%
+Brendan,2021,Quad Duces,103,121,7,44.59%
+G.A.,2021,Ilyasoldiers,100,127,4,43.29%
+Cowan,2021,Three Point Club,100,125,6,43.29%
+Aaron,2021,Airmen,98,131,2,42.42%
+Drewber,2021,CaddyShaq,93,136,2,40.26%
+Evan,2021,Kyries Flat Earthers,90,137,4,38.96%
+Craig,2022,BBNBA,120,86,3,57.42%
+Smy,2022,Norm Dale Disciples,118,85,6,56.46%
+Brendan,2022,Quad Duces,116,89,4,55.50%
+Aaron,2022,Airmen,114,92,3,54.55%
+Klink,2022,Klink,110,96,3,52.63%
+Scotty,2022,Afromen,108,96,5,51.67%
+Drewber,2022,CaddyShaq,103,102,4,49.28%
+Owen,2022,Bismacks Bisquicks,99,104,6,47.37%
+Cowan,2022,Three Point Club,93,116,0,44.50%
+Evan,2022,Kyries Flat Earthers,89,117,3,42.58%
+G.A.,2022,Ilyasoldiers,86,121,2,41.15%
+AK,2022,IR Thirsty,77,129,3,36.84%
+Craig,2023,BBNBA,121,86,2,57.89%
+G.A.,2023,Ilyasoldiers,117,86,6,55.98%
+Brendan,2023,Quad Duces,114,92,3,54.55%
+Smy,2023,Norm Dale Disciples,108,100,1,51.67%
+Cowan,2023,Three Point Club,103,101,5,49.28%
+Scotty,2023,Afromen,103,100,6,49.28%
+Owen,2023,Bismacks Bisquicks,103,104,2,49.28%
+Aaron,2023,Airmen,102,106,1,48.80%
+AK,2023,IR Thirsty,100,107,2,47.85%
+Drewber,2023,CaddyShaq,97,108,4,46.41%
+Klink,2023,Klink,95,108,6,45.45%
+Evan,2023,Kyries Flat Earthers,72,137,0,34.45%
+Scotty,2024,Afromen,138,58,2,69.70%
+AK,2024,IR Thirsty,128,70,0,64.65%
+Craig,2024,Pope's Pussycats,114,82,2,57.58%
+Klink,2024,Klink,108,89,1,54.55%
+Aaron,2024,Airmen,99,96,3,50.00%
+Brendan,2024,Quad Duces,97,101,0,48.99%
+Drewber,2024,CaddyShaq,95,102,1,47.98%
+Smy,2024,Norm Dale Disciples,89,106,3,44.95%
+G.A.,2024,Ilyasoldiers,88,108,2,44.44%
+Cowan,2024,Three Point Club,82,115,1,41.41%
+Owen,2024,Bismacks Bisquicks,78,118,2,39.39%
+Evan,2024,Kyries Flat Earthers,62,133,3,31.31%
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+
+## Sheet name: Draft History
+Year,Draft Position,Player,Team,Manager
+2024,1,Victor Wembanyama,Bismacks Bisquicks,Owen
+2024,2,Nikola Jokić,IR Thirsty,AK
+2024,3,Luka Dončić,Klink,Klink
+2024,4,Shai Gilgeous-Alexander,Airman,Aaron
+2024,5,Anthony Davis,Kyries Flat Earthers,Evan
+2023,1,Nikola Jokić,Three Point Club,Cowan
+2023,2,Joel Embiid,Ilyasoldiers,G.A.
+2023,3,Luka Dončić,CaddyShaq,Drewber
+2023,4,Shai Gilgeous-Alexander,Bismacks Bisquicks,Owen
+2023,5,Tyrese Haliburton,IR Thirsty,AK
+2022,1,Nikola Jokić,Ilyasoldiers,G.A.
+2022,2,Joel Embiid,CaddyShaq,Drewber
+2022,3,Kevin Durant,Three Point Club,Cowan
+2022,4,Giannis Antetokounmpo,Quad Duces,Brendan
+2022,5,Luka Dončić,Kyries Flat Earthers,Evan
+2021,1,Nikola Jokić,Afromen,Scotty
+2021,2,Luka Dončić,Ilyasoldiers,G.A.
+2021,3,Giannis Antetokounmpo,Bismacks Bisquicks,Owen
+2021,4,James Harden,IR Thirsty,AK
+2021,5,Stephen Curry,Three Point Club,Cowan
+2020,1,Giannis Antetokounmpo,Ilyasoldiers,G.A.
+2020,2,Luka Dončić,Quad Duces,Brendan
+2020,3,Anthony Davis,Three Point Club,Cowan
+2020,4,Stephen Curry,Airman,Aaron
+2020,5,James Harden,CaddyShaq,Drewber
+2019,1,Giannis Antetokounmpo,Quad Duces,Brendan
+2019,2,Anthony Davis,Rebuilding Year,Evan
+2019,3,Stephen Curry,Three Point Club,Cowan
+2019,4,James Harden,CaddyShaq,Drewber
+2019,5,Kawhi Leonard,Get Off My Lonzo,Will
+2018,1,James Harden,Afromen,Scotty
+2018,2,Anthony Davis,CaddyShaq,Drewber
+2018,3,Giannis Antetokounmpo,Norm Dale Disciples,Smy
+2018,4,Damian Lillard,Klink,Klink
+2018,5,Karl-Anthony Towns,Three Point Club,Cowan
+2017,1,Kevin Durant,Petey's Pistols,Pete
+2017,2,Giannis Antetokounmpo,Im Greekin Out,AK
+2017,3,Russell Westbrook,Three Point Club,Cowan
+2017,4,Stephen Curry,Klink and the F Ups,Klink
+2017,5,James Harden,CaddyShaq,Drewber
+
+## Sheet name: Raw
+Owner,Year,Team Name,W,L,T,W%,Reg Season,Tournament
+Pete,2004-05,The Pistols,131,81,19,56.71%
+Scotty,2004-05,Afromen,130,86,15,56.28%
+Craig,2004-05,Da Bulls,128,82,21,55.41%
+Erik,2004-05,Quique's Crew ;-),121,94,16,52.38%
+Aaron,2004-05,The Airmen,119,92,20,51.52%
+Nate,2004-05,The Matheletes,113,100,18,48.92%
+Owen,2004-05,Ginas Lover Boys,105,110,16,45.45%
+Klink,2004-05,The Milwaukee Redds,97,114,20,41.99%
+Smy,2004-05,West Allis Smeagols,90,116,25,38.96%
+Cowan,2004-05,The 3 Point Club,83,125,23,35.93%
+Brice,2004-05,The Master,77,134,20,33.33%
+G.A.,2004-05,The Kobe Bryant Show,76,136,19,32.90%
+Klink,2005-06,The Milwaukee Redds,121,82,17,55.00%
+Aaron,2005-06,The Airmen,115,81,24,52.27%
+AK,2005-06,Da Piiimps,112,90,18,50.91%
+Drewber,2005-06,THE FRESHMAN,111,80,29,50.45%
+Cowan,2005-06,Three Point Club,109,90,21,49.55%
+Scotty,2005-06,Afromen,106,92,22,48.18%
+Smy,2005-06,Fightin' Smeagols,103,97,20,46.82%
+Brice,2005-06,The Master,99,100,21,45.00%
+Craig,2005-06,Da Bulls,79,118,23,35.91%
+Nate,2005-06,The Matheletes,78,119,23,35.45%
+Pete,2005-06,The Pistols,77,121,22,35.00%
+G.A.,2005-06,The Kobe Bryant Show,77,117,26,35.00%
+Aaron,2006-07,The Airmen,124,87,20,53.68%
+Nate,2006-07,The Matheletes,121,92,18,52.38%
+Scotty,2006-07,Afromen,115,97,19,49.78%
+Smy,2006-07,Sons of Norman Dale,112,100,19,48.48%
+Pete,2006-07,The Pistols,111,102,18,48.05%
+Craig,2006-07,Da Bulls,107,107,17,46.32%
+AK,2006-07,Trey Bombers,100,112,19,43.29%
+G.A.,2006-07,The Kobe Bryant Show,100,112,19,43.29%
+Brice,2006-07,The Master,99,114,18,42.86%
+Klink,2006-07,The Milwaukee Redds,97,117,17,41.99%
+Cowan,2006-07,The Three Point Club,94,115,22,40.69%
+Drewber,2006-07,The Frosh lives on,92,117,22,39.83%
+AK,2007-08,Dime Droppers,134,74,23,58.01%
+Cowan,2007-08,Three Point Club,134,77,20,58.01%
+Smy,2007-08,Return of Coach Dale,129,84,18,55.84%
+Craig,2007-08,Da Bulls,126,85,20,54.55%
+Drewber,2007-08,The Frosh Lives on..,114,94,23,49.35%
+Nate,2007-08,The Mathletes,105,104,22,45.45%
+Pete,2007-08,Petey's Pistols,103,107,21,44.59%
+Owen,2007-08,GLB,97,106,28,41.99%
+Scotty,2007-08,Afromen,91,118,22,39.39%
+Aaron,2007-08,Airmen,88,120,23,38.10%
+Brice,2007-08,The Master,78,130,23,33.77%
+Klink,2007-08,The Milwaukee Redds,55,155,21,23.81%
+Scotty,2008-09,Afromen,154,57,20,66.67%
+Smy,2008-09,Defense of Coach D.,125,84,22,54.11%
+Nate,2008-09,The Mathletes,119,89,23,51.52%
+Pete,2008-09,Pippin's Pistols,119,93,19,51.52%
+Brendan D,2008-09,Shake'n Bake,108,100,23,46.75%
+Craig,2008-09,DAAAA Bullzzzz,100,112,19,43.29%
+Drewber,2008-09,The Frosh Lives On..,100,111,20,43.29%
+AK,2008-09,Sleeper,98,108,25,42.42%
+Aaron,2008-09,Airmen,95,118,18,41.13%
+Klink,2008-09,The Milwaukee Redds,93,114,24,40.26%
+Owen,2008-09,The Big O's,91,116,24,39.39%
+Cowan,2008-09,Three Point Club,56,156,19,24.24%
+Craig,2009-10,John Wall Owns You!,130,78,23,56.28%
+Smy,2009-10,Norman Dale Returns,122,87,22,52.81%
+Pete,2009-10,Petey's Pistols,120,88,23,51.95%
+Scotty,2009-10,Afromen,111,96,24,48.05%
+Owen,2009-10,The Big O's,109,100,22,47.19%
+AK,2009-10,Brook Freakin Lopez!,107,104,20,46.32%
+Drewber,2009-10,The Frosh Lives On..,104,101,26,45.02%
+Brendan D,2009-10,Shake'n Bake,103,104,24,44.59%
+Aaron,2009-10,Airmen,99,108,24,42.86%
+Nate,2009-10,Mathletes,87,121,23,37.66%
+Klink,2009-10,The Milwaukee Redds,86,122,23,37.23%
+Cowan,2009-10,Three Point Club,69,138,24,29.87%
+Smy,2010-11,El Ron the Elf,143,86,2,61.90%
+Nate,2010-11,The Mathletes,134,90,7,58.01%
+Scotty,2010-11,Afromen,133,93,5,57.58%
+Aaron,2010-11,Airmen,129,97,5,55.84%
+Brendan D,2010-11,Quad Duces,125,102,4,54.11%
+AK,2010-11,The Holiday Boozers,118,109,4,51.08%
+Klink,2010-11,The Milwaukee Redds,115,113,3,49.78%
+Craig,2010-11,John Wall Dance,107,119,5,46.32%
+Owen,2010-11,The Big O's,103,126,2,44.59%
+Cowan,2010-11,Three Point Club,96,130,5,41.56%
+Drewber,2010-11,The Frosh Lives On..,89,139,3,38.53%
+Pete,2010-11,Petey's Pistols,70,158,3,30.30%
+Cowan,2011-12,Three Point Club,90,60,4,58.44%
+Pete,2011-12,Petey's Pistols,86,62,6,55.84%
+Brendan D,2011-12,Quad Duces,86,67,1,55.84%
+Scotty,2011-12,Afromen,85,67,2,55.19%
+Nate,2011-12,The Mathletes,81,72,1,52.60%
+Klink,2011-12,Klanks,79,72,3,51.30%
+Smy,2011-12,Rontanamo Bay,75,77,2,48.70%
+Owen,2011-12,The Big O's,73,81,0,47.40%
+Drewber,2011-12,CaddyShaq,68,83,3,44.16%
+Craig,2011-12,JWD,66,88,0,42.86%
+AK,2011-12,Sandusky's Boys,64,89,1,41.56%
+Aaron,2011-12,Airmen,59,94,1,38.31%
+Cowan,2012-13,Three Point Club,139,91,1,60.17%
+Nate,2012-13,The Mathletes,134,92,5,58.01%
+Brendan D,2012-13,Quad Duces,129,100,2,55.84%
+Smy,2012-13,Rontanamo Bay,127,102,2,54.98%
+Scotty,2012-13,Afromen,122,104,5,52.81%
+Klink,2012-13,Klanks,120,108,3,51.95%
+Aaron,2012-13,Airmen,119,109,3,51.52%
+Owen,2012-13,The Big Ersanity!!!!,108,121,2,46.75%
+Drewber,2012-13,CaddyShaq,105,124,2,45.45%
+Craig,2012-13,FearTheBrow,100,131,0,43.29%
+Pete,2012-13,Petey's Pistols,100,129,2,43.29%
+AK,2012-13,Koenig,69,161,1,29.87%
+Craig,2013-14,Feel_my_ENES,144,82,5,62.34%
+Cowan,2013-14,Three Point Club,142,83,6,61.47%
+Aaron,2013-14,Airmen,137,91,3,59.31%
+AK,2013-14,Koenig,131,95,5,56.71%
+Nate,2013-14,The Mathletes,122,106,3,52.81%
+Smy,2013-14,Zombie Coach Dale,118,110,3,51.08%
+Brendan D,2013-14,Quad Duces,109,121,1,47.19%
+Owen,2013-14,The Big Ersanity!!!!,106,123,2,45.89%
+Pete,2013-14,Petey's Pistols,100,131,0,43.29%
+Drewber,2013-14,CaddyShaq,87,140,4,37.66%
+Klink,2013-14,Klanks,85,142,4,36.80%
+Scotty,2013-14,Afromen,85,142,4,36.80%
+Aaron,2014-15,Airmen,139,91,1,60.17%
+Craig,2014-15,Cals One N Dones,122,106,3,52.81%
+Owen,2014-15,Kitty Puss Puss III,120,108,3,51.95%
+Nate,2014-15,The Mathletes,120,109,2,51.95%
+Brendan D,2014-15,Quad Duces,119,109,3,51.52%
+Cowan,2014-15,Three Point Club,116,111,4,50.22%
+Klink,2014-15,Klanks,114,115,2,49.35%
+Drewber,2014-15,CaddyShaq,112,116,3,48.48%
+AK,2014-15,Koenig,111,115,5,48.05%
+Scotty,2014-15,Afromen,104,121,6,45.02%
+Pete,2014-15,Petey's Pistols,99,130,2,42.86%
+Smy,2014-15,Bye Week-Im that bad,91,136,4,39.39%
+AK,2015-16,Koenig,150,68,2,68.18%
+Scotty,2015-16,Afromen,131,87,2,59.55%
+Pete,2015-16,Petey's Pistols,119,99,2,54.09%
+Aaron,2015-16,Airmen,119,95,6,54.09%
+Brendan D,2015-16,Quad Duces,116,102,2,52.73%
+Drewber,2015-16,CaddyShaq,112,103,5,50.91%
+Klink,2015-16,Case of the Mudiays,102,117,1,46.36%
+Owen,2015-16,Kitty Puss Puss III,98,119,3,44.55%
+Smy,2015-16,Coach Dale Reboot,97,117,6,44.09%
+Nate,2015-16,The Mathletes,88,129,3,40.00%
+Cowan,2015-16,Three Point Club,87,128,5,39.55%
+Craig,2015-16,F ing Autodraft $#!@,82,137,1,37.27%
+Smy,2016-17,Return to Greatness,135,81,4,61.36%
+Nate,2016-17,The Mathletes,134,84,2,60.91%
+Owen,2016-17,Kitty Puss Puss III,127,91,2,57.73%
+Aaron,2016-17,Airmen,120,98,2,54.55%
+Scotty,2016-17,Afromen,123,95,2,55.91%
+Brendan D,2016-17,Quad Duces,112,106,2,50.91%
+Craig,2016-17,Fear the Brow,105,114,1,47.73%
+Drewber,2016-17,CaddyShaq,98,119,3,44.55%
+Klink,2016-17,Klink Redemption,101,113,6,45.91%
+Cowan,2016-17,Three Point Club,95,120,5,43.18%
+AK,2016-17,Dumpster Fire,90,128,2,40.91%
+Pete,2016-17,Petey's Pistols,63,154,3,28.64%
+Nate,2017-18,The Mathletes,140,89,2,60.61%
+AK,2017-18,Im Greekin Out Man,137,89,5,59.31%
+Aaron,2017-18,Airmen,134,95,2,58.01%
+Craig,2017-18,Big KAT!,130,97,4,56.28%
+Brendan D,2017-18,Quad Duces,129,101,1,55.84%
+Owen,2017-18,Kitty Puss Puss III,125,104,2,54.11%
+Scotty,2017-18,Afromen,119,109,3,51.52%
+Klink,2017-18,Klink and the F Ups,113,115,3,48.92%
+Drewber,2017-18,CaddyShaq,91,139,1,39.39%
+Smy,2017-18,Return to Greatness,88,142,1,38.10%
+Cowan,2017-18,Three Point Club,82,145,4,35.50%
+Pete,2017-18,Petey's Pistols,81,144,6,35.06%
+Craig,2018-19,Señor Crappy Draft,132,95,4,57.14%
+Aaron,2018-19,Airmen,131,95,5,56.71%
+Smy,2018-19,Norm Dale Disciples,131,96,4,56.71%
+Scotty,2018-19,Afromen,124,101,6,53.68%
+Klink,2018-19,Klink,124,102,5,53.68%
+AK,2018-19,Im Greekin Out Man,122,106,3,52.81%
+Brendan D,2018-19,Quad Duces,120,107,4,51.95%
+Drewber,2018-19,CaddyShaq,107,120,4,46.32%
+Evan,2018-19,Rebuilding Year,96,133,2,41.56%
+Cowan,2018-19,Three Point Club,94,132,5,40.69%
+Will,2018-19,Get Off My Lonzo,91,135,5,39.39%
+Owen,2018-19,Kitty Puss Puss III,89,139,3,38.53%
+Smy,2019-20,Norm Dale Disciples,128,77,4,61.24%
+Scotty,2019-20,Afromen,125,80,4,59.81%
+Craig,2019-20,ThreePeat!,115,88,6,55.02%
+Owen,2019-20,Kitty Puss Puss III,113,91,5,54.07%
+Klink,2019-20,Klink,113,96,0,54.07%
+Evan,2019-20,Rebuilding Year,111,94,4,53.11%
+AK,2019-20,IR Thirsty,102,105,2,48.80%
+Drewber,2019-20,CaddyShaq,102,106,1,48.80%
+Aaron,2019-20,Airmen,95,109,5,45.45%
+Cowan,2019-20,Three Point Club,79,126,4,37.80%
+Brendan D,2019-20,Quad Duces,77,130,2,36.84%
+Will,2019-20,Get Off My Lonzo,75,133,1,35.89%
+Klink,2020-21,Klink,115,69,3,61.50%
+Smy,2020-21,Norm Dale Disciples,106,78,3,56.68%
+Craig,2020-21,BBNBA,106,78,3,56.68%
+Evan,2020-21,Kyries Flat Earthers,104,82,1,55.61%
+Aaron,2020-21,Airmen,96,87,4,51.34%
+Drewber,2020-21,CaddyShaq,93,90,4,49.73%
+G.A.,2020-21,Ilyasoldiers,93,91,3,49.73%
+Scotty,2020-21,Afromen,88,92,7,47.06%
+Cowan,2020-21,Three Point Club,88,97,2,47.06%
+AK,2020-21,IR Thirsty,80,101,6,42.78%
+Brendan D,2020-21,Quad Duces,73,112,2,39.04%
+Owen,2020-21,Kitty Puss Puss III,59,124,4,31.55%
+Owen,2021-22,Bismacks Bisquicks,135,94,2,58.44%
+Scotty,2021-22,Afromen,134,95,2,58.01%
+Craig,2021-22,BBNBA,131,94,6,56.71%
+AK,2021-22,IR Thirsty,131,98,2,56.71%
+Smy,2021-22,Norm Dale Disciples,125,105,1,54.11%
+Klink,2021-22,Klink,124,101,6,53.68%
+Brendan D,2021-22,Quad Duces,103,121,7,44.59%
+G.A.,2021-22,Ilyasoldiers,100,127,4,43.29%
+Cowan,2021-22,Three Point Club,100,125,6,43.29%
+Aaron,2021-22,Airmen,98,131,2,42.42%
+Drewber,2021-22,CaddyShaq,93,136,2,40.26%
+Evan,2021-22,Kyries Flat Earthers,90,137,4,38.96%
+Craig,2022-23,BBNBA,120,86,3,57.42%
+Smy,2022-23,Norm Dale Disciples,118,85,6,56.46%
+Brendan D,2022-23,Quad Duces,116,89,4,55.50%
+Aaron,2022-23,Airmen,114,92,3,54.55%
+Klink,2022-23,Klink,110,96,3,52.63%
+Scotty,2022-23,Afromen,108,96,5,51.67%
+Drewber,2022-23,CaddyShaq,103,102,4,49.28%
+Owen,2022-23,Bismacks Bisquicks,99,104,6,47.37%
+Cowan,2022-23,Three Point Club,93,116,0,44.50%
+Evan,2022-23,Kyries Flat Earthers,89,117,3,42.58%
+G.A.,2022-23,Ilyasoldiers,86,121,2,41.15%
+AK,2022-23,IR Thirsty,77,129,3,36.84%
+Craig,2023-24,BBNBA,121,86,2,57.89%
+G.A.,2023-24,Ilyasoldiers,117,86,6,55.98%
+Brendan D,2023-24,Quad Duces,114,92,3,54.55%
+Smy,2023-24,Norm Dale Disciples,108,100,1,51.67%
+Cowan,2023-24,Three Point Club,103,101,5,49.28%
+Scotty,2023-24,Afromen,103,100,6,49.28%
+Owen,2023-24,Bismacks Bisquicks,103,104,2,49.28%
+Aaron,2023-24,Airmen,102,106,1,48.80%
+AK,2023-24,IR Thirsty,100,107,2,47.85%
+Drewber,2023-24,CaddyShaq,97,108,4,46.41%
+Klink,2023-24,Klink,95,108,6,45.45%
+Evan,2023-24,Kyries Flat Earthers,72,137,0,34.45%
+Scotty,2024-25,Afromen,138,58,2,69.70%
+AK,2024-25,IR Thirsty,128,70,0,64.65%
+Craig,2024-25,Pope's Pussycats,114,82,2,57.58%
+Klink,2024-25,Klink,108,89,1,54.55%
+Aaron,2024-25,Airmen,99,96,3,50.00%
+Brendan D,2024-25,Quad Duces,97,101,0,48.99%
+Drewber,2024-25,CaddyShaq,95,102,1,47.98%
+Smy,2024-25,Norm Dale Disciples,89,106,3,44.95%
+G.A.,2024-25,Ilyasoldiers,88,108,2,44.44%
+Cowan,2024-25,Three Point Club,82,115,1,41.41%
+Owen,2024-25,Bismacks Bisquicks,78,118,2,39.39%
+Evan,2024-25,Kyries Flat Earthers,62,133,3,31.31%
+Klink,2025-26,Klink,142,65,2,67.94%
+AK,2025-26,6 Feet From The Edgecombe,134,74,1,64.11%
+Craig,2025-26,Maxey Pads,126,80,3,60.29%
+Brendan D,2025-26,Quad Duces,121,84,4,57.89%
+Drewber,2025-26,CaddyShaq,111,97,1,53.11%
+G.A.,2025-26,Ilyasoldiers,110,95,4,52.63%
+Smy,2025-26,Norm Dale Memorial RIP,109,98,2,52.15%
+Scotty,2025-26,Afromen,85,121,3,40.67%
+Aaron,2025-26,Airmen,78,126,5,37.32%
+Evan,2025-26,Kyries Flat Earthers,78,126,5,37.32%
+Cowan,2025-26,Three Point Club,72,135,2,34.45%
+B.Patnode,2025-26,Luka Gone-cic,71,136,2,33.97%
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy
+Smy

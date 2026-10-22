@@ -158,7 +158,7 @@ h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
 /* controls */
 .controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 20px; margin-top: -12px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.field label, .field-label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
 .check { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; color: var(--ink-2); }
 .count { margin: 0 0 8px auto; color: var(--ink-2); font-size: 13px; }
@@ -213,3 +213,30 @@ input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220p
   .stat dt { font-size: 12px; }
   h2 { font-size: 26px; }
 }
+
+/* head-to-head */
+:root { --loss: #b4532f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --loss: #e8906d; } }
+:root[data-theme="dark"] { --loss: #e8906d; }
+select.narrow { min-width: 150px; }
+.notice-sample { margin-top: 8px; border-left-color: var(--loss); }
+.empty-note { margin: 0; max-width: 62ch; padding: 16px; border: 1px dashed var(--line); border-radius: 8px; color: var(--ink-2); }
+.grid-wrap { max-height: 78vh; }
+.h2h-grid th, .h2h-grid td { padding: 7px 9px; font-size: 13px; }
+.h2h-grid tbody th { position: sticky; left: 0; z-index: 1; background: var(--surface); font-weight: 700; border-bottom: 1px solid var(--line); text-align: left; }
+.h2h-grid thead th:first-child { left: 0; z-index: 2; }
+.h2h-grid thead th { z-index: 1; }
+.h2h-grid td.cell a { color: var(--ink); text-decoration: none; display: block; }
+.h2h-grid td.cell a:hover { text-decoration: underline; }
+.h2h-grid td.self { background: repeating-linear-gradient(135deg, var(--surface-2) 0 4px, transparent 4px 8px); }
+.tone-w2 { background: color-mix(in srgb, var(--accent) 38%, var(--surface)); }
+.tone-w1 { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.tone-l1 { background: color-mix(in srgb, var(--loss) 16%, var(--surface)); }
+.tone-l2 { background: color-mix(in srgb, var(--loss) 34%, var(--surface)); }
+.dt tbody tr:hover td.cell[class*="tone-"] { filter: brightness(0.96); }
+.res { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+.res-W { background: var(--accent); color: var(--on-accent); }
+.res-L { background: var(--loss); color: #fff; }
+.res-T { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.res-run { display: inline-flex; gap: 3px; }
+.res-run .res { width: 16px; height: 16px; font-size: 10px; border-radius: 3px; }

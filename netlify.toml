@@ -1,0 +1,11 @@
+[build]
+  command = "node scripts/export_matchups.mjs && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Pull request previews show made-up head-to-head games so the pages can be tried before Yahoo data exists.
+# Production never does: it only shows real matchups from Supabase.
+[context.deploy-preview.environment]
+  SAMPLE_H2H = "1"

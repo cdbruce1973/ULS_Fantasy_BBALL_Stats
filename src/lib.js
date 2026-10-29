@@ -1,4 +1,6 @@
-import { SEASONS } from "./data.js";
+import { SEASONS as SHEET } from "./data.js";
+import HISTORY from "./history.json";
+import { loadLeague } from "./league.js";
 
 // ---------- formatting ----------
 export const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -13,17 +15,43 @@ export const winPct = (w, l, t, countTies) => {
   return games ? (w / games) * 100 : NaN;
 };
 
-// ---------- flatten ----------
-const sorted = [...SEASONS].sort((a, b) => a.start - b.start);
-export const SEASON_LIST = sorted;
-export const CURRENT = sorted[sorted.length - 1];
+// ---------- data ----------
+// Finished seasons from Yahoo are baked into the build (src/history.json). 2004-05 predates the
+// league's Yahoo history, so it comes from the commissioner's sheet. The current season is added
+// live by loadLiveSeason(). These are live bindings: setData() rebuilds them and the App re-renders.
+const BAKED = [...SHEET.filter((s) => s.start < 2005), ...HISTORY.seasons];
+let sorted = [];
+export let SEASON_LIST = [];
+export let CURRENT = null;
+export let TEAM_SEASONS = [];
+export let OWNER_NAMES = [];
+export let DRAFT = [];
+// Finished seasons only: a season in progress would top the best-season lists on a few weeks of games.
+let FINISHED = [];
+function setData(seasons, draft) {
+  sorted = [...seasons].sort((a, b) => a.start - b.start);
+  SEASON_LIST = sorted;
+  CURRENT = sorted[sorted.length - 1];
+  TEAM_SEASONS = sorted.flatMap((s) =>
+    s.teams.map((t) => ({ ...t, season: s.label, start: s.start, end: s.end, current: !!s.current }))
+  );
+  FINISHED = TEAM_SEASONS.filter((t) => !t.current);
+  OWNER_NAMES = [...new Set(TEAM_SEASONS.map((t) => t.owner))].sort((a, b) => a.localeCompare(b));
+  const label = new Map(sorted.map((s) => [s.start, s.label]));
+  DRAFT = draft.map((d) => ({ ...d, season: label.get(d.start) }));
+}
+setData(BAKED, HISTORY.draft);
 
-export const TEAM_SEASONS = sorted.flatMap((s) =>
-  s.teams.map((t) => ({ ...t, season: s.label, start: s.start, end: s.end }))
-);
-export const OWNER_NAMES = [...new Set(TEAM_SEASONS.map((t) => t.owner))].sort((a, b) =>
-  a.localeCompare(b)
-);
+// Add the current season's teams and draft. Resolves to true if anything was added; if Supabase
+// can't be reached the pages keep showing the finished seasons.
+export async function loadLiveSeason() {
+  const live = await loadLeague({ current: true });
+  const seasons = live.seasons.filter((s) => !BAKED.some((b) => b.start === s.start)); // baked wins
+  if (!seasons.length) return false;
+  const starts = new Set(seasons.map((s) => s.start));
+  setData([...BAKED, ...seasons], [...HISTORY.draft, ...live.draft.filter((d) => starts.has(d.start))]);
+  return true;
+}
 
 // ---------- owners ----------
 export function buildOwners(countTies) {
@@ -43,8 +71,9 @@ export function buildOwners(countTies) {
       seasons: rows.length,
       w, l, t,
       pct: winPct(w, l, t, countTies),
-      avgW: w / rows.length,
-      avgL: l / rows.length,
+      // Averages leave out a season in progress.
+      avgW: avg(rows, "w"),
+      avgL: avg(rows, "l"),
       titles: count("tourney", 1),
       runnerUps: count("tourney", 2),
       thirds: count("tourney", 3),
@@ -59,10 +88,14 @@ export function buildOwners(countTies) {
   });
 }
 const sum = (rows, k) => rows.reduce((a, r) => a + r[k], 0);
+const avg = (rows, k) => {
+  const done = rows.filter((r) => !r.current);
+  return done.length ? sum(done, k) / done.length : 0;
+};
 
 // ---------- banners ----------
 export function buildBanners() {
-  return [...sorted].reverse().map((s) => {
+  return sorted.filter((s) => !s.current).reverse().map((s) => {
     const by = (key, n) => s.teams.find((t) => t[key] === n);
     const champ = by("tourney", 1);
     const reg = by("reg", 1);
@@ -79,7 +112,7 @@ export function buildBanners() {
 
 // ---------- records ----------
 export function bestSeasons(countTies, key, n = 5) {
-  const rows = TEAM_SEASONS.map((t) => ({ ...t, pct: winPct(t.w, t.l, t.t, countTies) }));
+  const rows = FINISHED.map((t) => ({ ...t, pct: winPct(t.w, t.l, t.t, countTies) }));
   rows.sort((a, b) => (key === "pct" ? b.pct - a.pct : b.w - a.w));
   return rows.slice(0, n);
 }

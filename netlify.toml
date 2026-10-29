@@ -1,5 +1,6 @@
 [build]
-  command = "node scripts/export_matchups.mjs && npm run build"
+  # export_data bakes finished seasons (games, teams, drafts) into the build from the public Supabase tables (no secrets)
+  command = "node scripts/export_data.mjs && npm run build"
   publish = "dist"
 
 [build.environment]

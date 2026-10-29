@@ -1,5 +1,5 @@
 // Writes src/matchups.json from the Supabase `matchups` table so the site can show head-to-head records.
-// Runs before the Netlify build. Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the build environment
+// Runs before the Netlify build. Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (the secret key) in the build environment
 // (Netlify: Site configuration > Environment variables). The key is only used here, never shipped to the browser.
 // Without them it leaves src/matchups.json as is, so local builds keep working.
 import { writeFileSync } from "node:fs";
@@ -17,11 +17,14 @@ const select = [
   "t1:teams!team1_id(name, owner:owners(name))",
   "t2:teams!team2_id(name, owner:owners(name))",
 ].join(",");
+// Either key type works: a new secret key (sb_secret_...) goes only in the apikey header,
+// a legacy service_role key (a JWT starting "eyJ") also needs the Bearer header.
+const auth = key.startsWith("eyJ") ? { apikey: key, Authorization: `Bearer ${key}` } : { apikey: key };
 const page = 1000;
 const rows = [];
 for (let from = 0; ; from += page) {
   const res = await fetch(`${url}/rest/v1/matchups?select=${encodeURIComponent(select)}&is_complete=eq.true&is_consolation=eq.false&order=id`, {
-    headers: { apikey: key, Authorization: `Bearer ${key}`, Range: `${from}-${from + page - 1}` },
+    headers: { ...auth, Range: `${from}-${from + page - 1}` },
   });
   if (!res.ok) throw new Error(`export_matchups: ${res.status} ${await res.text()}`);
   const batch = await res.json();

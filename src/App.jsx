@@ -840,7 +840,7 @@ function RivalryView({ owner, opp, sides, countTies, filter, setFilter }) {
             <section aria-labelledby="riv-cats-h">
               <div className="section-head">
                 <h2 id="riv-cats-h">Category by category</h2>
-                <p className="hint">Each week's nine categories, counted across every meeting. Fewer turnovers wins TO.</p>
+                <p className="hint">Each week's 11 categories, counted across every meeting. Fewer turnovers wins TO. FG% isn't in Yahoo's data before 2010-11.</p>
               </div>
               <DataTable
                 caption={`${owner} vs ${opp} by category`}

@@ -9,10 +9,12 @@ import { SEASON_LIST, slug, winPct } from "./lib.js";
 // Until the Yahoo sync runs it is empty. A build with SAMPLE_H2H=1 fills it with made-up games
 // so the pages can be previewed; that build shows a banner saying so.
 
-// Yahoo NBA stat ids for the nine scoring categories. Turnovers: fewer wins the category.
+// Yahoo NBA stat ids for the league's 11 scoring categories (checked against every week's
+// categories-won since 2010-11). Seasons before that have no FG% stat in Yahoo's data, so it is
+// skipped there. Turnovers: fewer wins the category.
 export const CATEGORIES = [
-  ["5", "FG%"], ["8", "FT%"], ["10", "3PTM"], ["12", "PTS"], ["15", "REB"],
-  ["16", "AST"], ["17", "ST"], ["18", "BLK"], ["19", "TO"],
+  ["4", "FGM"], ["5", "FG%"], ["7", "FTM"], ["8", "FT%"], ["10", "3PTM"], ["12", "PTS"],
+  ["15", "REB"], ["16", "AST"], ["17", "ST"], ["18", "BLK"], ["19", "TO"],
 ];
 const LOWER_WINS = new Set(["19"]);
 
@@ -221,7 +223,7 @@ function sampleMatchups() {
       let ac = 0, bc = 0;
       for (const [id] of CATEGORIES) {
         const r = rand();
-        const base = id === "5" ? 0.47 : id === "8" ? 0.78 : { "10": 55, "12": 560, "15": 230, "16": 130, "17": 40, "18": 28, "19": 70 }[id];
+        const base = id === "5" ? 0.47 : id === "8" ? 0.78 : { "4": 205, "7": 95, "10": 55, "12": 560, "15": 230, "16": 130, "17": 40, "18": 28, "19": 70 }[id];
         const spread = base * 0.08;
         let av = base + (rand() - 0.5) * spread, bv = av;
         if (r < 0.06) { /* tie */ } else if (r < 0.06 + p * 0.94) { av += spread * 0.5; ac++; } else { bv += spread * 0.5; bc++; }

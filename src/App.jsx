@@ -603,10 +603,10 @@ function OwnerPicker({ id, label, value, onChange, exclude, placeholder }) {
   );
 }
 
-function H2HPage({ param, countTies, filter, setFilter }) {
+function H2HPage({ param, countTies, filter, setFilter, liveGames }) {
   const sides = useMemo(
     () => H.filterSides({ phase: filter.phase, from: filter.from ?? -Infinity, to: filter.to ?? Infinity }),
-    [filter]
+    [filter, liveGames]
   );
   if (!H.HAS_DATA) {
     return (
@@ -616,8 +616,8 @@ function H2HPage({ param, countTies, filter, setFilter }) {
           <p className="lede">Every owner's record against every other owner, built from the weekly matchups.</p>
         </header>
         <p className="empty-note">
-          Weekly matchups come from Yahoo, so this section fills in once the Yahoo sync is running.
-          The spreadsheet only has season totals, and 2004-05 will not have head-to-head games.
+          No head-to-head games have loaded. Weekly matchups come from Yahoo; 2004-05 has none because
+          that season only exists in the spreadsheet.
         </p>
       </>
     );
@@ -1006,6 +1006,11 @@ export default function App() {
   const [countTies, setCountTies] = useState(false);
   const owners = useMemo(() => L.buildOwners(countTies), [countTies]);
   const [h2hFilter, setH2hFilter] = useState({ phase: "all", from: null, to: null });
+  // Finished seasons are baked into the build; the current season's games load live from Supabase.
+  const [liveGames, setLiveGames] = useState(0);
+  useEffect(() => {
+    H.loadLiveGames().then(setLiveGames).catch((e) => console.warn("Live games not loaded:", e.message));
+  }, []);
   const [route, param] = parseRoute(hash);
   useEffect(() => { window.scrollTo(0, 0); }, [hash]);
   const active = route === "owner" ? "owners" : route;
@@ -1014,7 +1019,7 @@ export default function App() {
   if (route === "owner") page = <OwnerPage slug={param} owners={owners} countTies={countTies} />;
   else if (route === "owners") page = <OwnersPage owners={owners} countTies={countTies} />;
   else if (route === "seasons") page = <SeasonsPage start={param} countTies={countTies} />;
-  else if (route === "h2h") page = <H2HPage param={param} countTies={countTies} filter={h2hFilter} setFilter={setH2hFilter} />;
+  else if (route === "h2h") page = <H2HPage param={param} countTies={countTies} filter={h2hFilter} setFilter={setH2hFilter} liveGames={liveGames} />;
   else if (route === "teams") page = <TeamsPage countTies={countTies} />;
   else if (route === "draft") page = <DraftPage />;
   else page = <RecordBook owners={owners} countTies={countTies} />;

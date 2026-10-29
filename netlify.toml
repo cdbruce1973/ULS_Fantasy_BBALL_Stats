@@ -1,4 +1,5 @@
 [build]
+  # export_matchups bakes finished seasons into the build; it reads the public h2h_games view (no secrets)
   command = "node scripts/export_matchups.mjs && npm run build"
   publish = "dist"
 

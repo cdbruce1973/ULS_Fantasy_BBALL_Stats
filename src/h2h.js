@@ -1,13 +1,14 @@
 import MATCHUP_ROWS from "./matchups.json";
 import { SEASON_LIST, slug, winPct } from "./lib.js";
+import { fetchAll, toGame } from "./supabase.js";
 
-// Head-to-head history, built from weekly matchups.
-// src/matchups.json is written by scripts/export_matchups.mjs from the Supabase `matchups` table
-// (complete, non-consolation games only). Row shape:
-//   { start, week, playoff, a, aTeam, b, bTeam, ac, bc, as, bs }
+// Head-to-head history, built from weekly matchups. Two sources, merged:
+//  - src/matchups.json: every finished season, written at build time by scripts/export_matchups.mjs
+//    (finished seasons never change, so this is rebuilt once a year)
+//  - the current season, loaded live from Supabase's h2h_games view by loadLiveGames()
+// Row shape: { start, week, playoff, a, aTeam, b, bTeam, ac, bc, as, bs }
 //   start = season start year, a/b = owner display names, ac/bc = categories won, as/bs = stats by Yahoo stat_id.
-// Until the Yahoo sync runs it is empty. A build with SAMPLE_H2H=1 fills it with made-up games
-// so the pages can be previewed; that build shows a banner saying so.
+// A build with SAMPLE_H2H=1 and no real games uses made-up games instead (with a banner saying so).
 
 // Yahoo NBA stat ids for the league's 11 scoring categories (checked against every week's
 // categories-won since 2010-11). Seasons before that have no FG% stat in Yahoo's data, so it is
@@ -20,20 +21,42 @@ const LOWER_WINS = new Set(["19"]);
 
 /* global __SAMPLE_H2H__ */
 export const IS_SAMPLE = typeof __SAMPLE_H2H__ !== "undefined" && __SAMPLE_H2H__ && MATCHUP_ROWS.length === 0;
-export const MATCHUPS = IS_SAMPLE ? sampleMatchups() : MATCHUP_ROWS;
-export const HAS_DATA = MATCHUPS.length > 0;
+const BASE = IS_SAMPLE ? sampleMatchups() : MATCHUP_ROWS;
 
 // ---------- sides: every matchup seen from both owners ----------
+// These are live bindings: loadLiveGames() rebuilds them, and the App re-renders when it resolves.
 const resultOf = (f, a) => (f > a ? "W" : f < a ? "L" : "T");
-const ALL_SIDES = MATCHUPS.flatMap((m) => [
+const toSides = (m) => [
   { owner: m.a, opp: m.b, team: m.aTeam, oppTeam: m.bTeam, start: m.start, week: m.week, playoff: !!m.playoff, cf: m.ac, ca: m.bc, stats: m.as, oppStats: m.bs, res: resultOf(m.ac, m.bc) },
   { owner: m.b, opp: m.a, team: m.bTeam, oppTeam: m.aTeam, start: m.start, week: m.week, playoff: !!m.playoff, cf: m.bc, ca: m.ac, stats: m.bs, oppStats: m.as, res: resultOf(m.bc, m.ac) },
-]).sort((x, y) => x.start - y.start || x.week - y.week);
+];
+let ALL_SIDES = [];
+export let HAS_DATA = false;
+export let H2H_SEASONS = [];
+export let H2H_OWNERS = [];
+function setGames(games) {
+  ALL_SIDES = games.flatMap(toSides).sort((x, y) => x.start - y.start || x.week - y.week);
+  HAS_DATA = ALL_SIDES.length > 0;
+  H2H_SEASONS = [...new Set(ALL_SIDES.map((s) => s.start))].sort((a, b) => a - b);
+  H2H_OWNERS = [...new Set(ALL_SIDES.map((s) => s.owner))].sort((a, b) => a.localeCompare(b));
+}
+setGames(BASE);
+
+// Add the current season's completed games. Resolves to how many were added; if Supabase can't be
+// reached the pages simply keep showing the finished seasons.
+export async function loadLiveGames() {
+  if (IS_SAMPLE) return 0;
+  const baked = new Set(BASE.map((g) => g.start));
+  const select = "start_year,week,is_playoff,a,a_team,b,b_team,ac,bc,a_stats,b_stats";
+  const live = (await fetchAll(`h2h_games?select=${select}&is_current=eq.true&order=week`))
+    .map(toGame)
+    .filter((g) => !baked.has(g.start)); // a season already baked in wins over a live copy
+  if (live.length) setGames([...BASE, ...live]);
+  return live.length;
+}
 
 const labelOf = new Map(SEASON_LIST.map((s) => [s.start, s.label]));
 export const seasonLabel = (start) => labelOf.get(start) ?? `${start}-${String((start + 1) % 100).padStart(2, "0")}`;
-export const H2H_SEASONS = [...new Set(ALL_SIDES.map((s) => s.start))].sort((a, b) => a - b);
-export const H2H_OWNERS = [...new Set(ALL_SIDES.map((s) => s.owner))].sort((a, b) => a.localeCompare(b));
 export const ownerBySlug = (sl) => H2H_OWNERS.find((n) => slug(n) === sl);
 
 // filter = { phase: "all" | "reg" | "playoff", from, to }  (from/to are season start years, inclusive)

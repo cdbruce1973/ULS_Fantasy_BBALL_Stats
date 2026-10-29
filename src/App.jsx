@@ -1047,6 +1047,13 @@ export default function App() {
       )}
       <main>{page}</main>
       <footer className="foot">
+        {/* Yahoo's required attribution (developer.yahoo.com/attribution): official logo, unaltered, linked to yahoo.com. */}
+        <a className="yahoo-attr" href="https://www.yahoo.com/?ilc=401" target="_blank" rel="noopener">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_white.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_white_retina.png 2x" />
+            <img src="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_purple_retina.png 2x" width="134" height="20" alt="Powered by Yahoo" />
+          </picture>
+        </a>
         <p>Fantasy data provided by Yahoo Fantasy</p>
         <p>An independent league site. Colors and pines nod to University Lake School, home of the Lakers, and it is not affiliated with the school.</p>
       </footer>

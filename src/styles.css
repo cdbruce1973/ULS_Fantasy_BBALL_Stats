@@ -201,6 +201,7 @@ input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220p
 .shoreline .wave { fill: none; stroke: var(--lake); stroke-width: 2; }
 .foot { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
 .foot p { margin: 0; font-size: 13px; color: var(--ink-2); }
+.yahoo-attr { align-self: flex-start; line-height: 0; margin-bottom: 4px; }
 
 /* phones: tighter vertical rhythm, stats in two even columns, record on its own row */
 @media (max-width: 640px) {

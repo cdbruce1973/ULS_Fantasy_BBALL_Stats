@@ -3,7 +3,7 @@ import { SEASON_LIST, slug, winPct } from "./lib.js";
 import { fetchAll, toGame } from "./supabase.js";
 
 // Head-to-head history, built from weekly matchups. Two sources, merged:
-//  - src/matchups.json: every finished season, written at build time by scripts/export_matchups.mjs
+//  - src/matchups.json: every finished season, written at build time by scripts/export_data.mjs
 //    (finished seasons never change, so this is rebuilt once a year)
 //  - the current season, loaded live from Supabase's h2h_games view by loadLiveGames()
 // Row shape: { start, week, playoff, a, aTeam, b, bTeam, ac, bc, as, bs }

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as L from "./lib.js";
 import * as H from "./h2h.js";
-import { DRAFT } from "./data.js";
 
 const NAV = [
   ["", "Record book"],
@@ -506,23 +505,26 @@ function SeasonsPage({ start, countTies }) {
       </nav>
       <section aria-labelledby="season-h">
         <div className="section-head"><h2 id="season-h">{season.label}</h2></div>
-        <div className="results">
-          {results.map(([title, list]) => (
-            <div key={title}>
-              <h3>{title}</h3>
-              <ol className="podium">
-                {list.map((t, i) =>
-                  t ? (
-                    <li key={i}>
-                      <span className={"chip chip-" + (i + 1)}>{L.ordinal(i + 1)}</span>
-                      <span><OwnerLink name={t.owner} /> <span className="dim">{t.team}</span></span>
-                    </li>
-                  ) : null
-                )}
-              </ol>
-            </div>
-          ))}
-        </div>
+        {season.current && <p className="hint">Season in progress. Records update nightly from Yahoo; finishes appear once the playoffs are done.</p>}
+        {!season.current && (
+          <div className="results">
+            {results.map(([title, list]) => (
+              <div key={title}>
+                <h3>{title}</h3>
+                <ol className="podium">
+                  {list.map((t, i) =>
+                    t ? (
+                      <li key={i}>
+                        <span className={"chip chip-" + (i + 1)}>{L.ordinal(i + 1)}</span>
+                        <span><OwnerLink name={t.owner} /> <span className="dim">{t.team}</span></span>
+                      </li>
+                    ) : null
+                  )}
+                </ol>
+              </div>
+            ))}
+          </div>
+        )}
         <DataTable
           caption={`${season.label} standings`}
           sort={sort}
@@ -895,13 +897,13 @@ function MeetingList({ rows, owner, opp }) {
 }
 
 // ---------- Teams (search every team name across every season) ----------
-function TeamsPage({ countTies }) {
+function TeamsPage({ countTies, ver }) {
   const [query, setQuery] = useState("");
   const [owner, setOwner] = useState("");
   const [sort, onSort] = useSort("start");
   const all = useMemo(
     () => L.TEAM_SEASONS.map((t) => ({ ...t, pct: L.winPct(t.w, t.l, t.t, countTies) })),
-    [countTies]
+    [countTies, ver]
   );
   const q = query.trim().toLowerCase();
   const rows = sortRows(
@@ -948,31 +950,33 @@ function TeamsPage({ countTies }) {
 
 // ---------- Draft ----------
 function DraftPage() {
-  const [year, setYear] = useState("");
+  const years = [...new Set(L.DRAFT.map((d) => d.start))].sort((a, b) => b - a);
+  // Opens on the latest draft; searching a player looks across every year.
+  const [year, setYear] = useState(null);
   const [owner, setOwner] = useState("");
   const [query, setQuery] = useState("");
-  const [sort, onSort] = useSort("year");
-  const years = [...new Set(DRAFT.map((d) => d.year))].sort((a, b) => b - a);
-  const owners = [...new Set(DRAFT.map((d) => d.owner))].sort();
+  const [sort, onSort] = useSort("start");
+  const owners = [...new Set(L.DRAFT.map((d) => d.owner))].sort((a, b) => a.localeCompare(b));
   const q = query.trim().toLowerCase();
+  const shown = year ?? (q || owner ? "" : String(years[0] ?? ""));
   const rows = sortRows(
-    DRAFT.filter((d) => (!year || d.year === +year) && (!owner || d.owner === owner) && (!q || d.player.toLowerCase().includes(q))),
+    L.DRAFT.filter((d) => (!shown || d.start === +shown) && (!owner || d.owner === owner) && (!q || d.player.toLowerCase().includes(q))),
     sort
   );
   return (
     <>
       <header className="page-head">
         <h1>Draft history</h1>
-        <p className="lede">Sample: the first five picks of each draft from 2017 to 2024. The full drafts for every season will load from Yahoo.</p>
+        <p className="lede">Every pick of every draft since {L.SEASON_LIST.find((s) => s.start === years[years.length - 1])?.label}, from Yahoo.</p>
       </header>
       <div className="controls">
         <Field id="draft-search" label="Search player">
           <input id="draft-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Try Luka" />
         </Field>
-        <Field id="draft-year" label="Year">
-          <select id="draft-year" value={year} onChange={(e) => setYear(e.target.value)}>
-            <option value="">All years</option>
-            {years.map((y) => <option key={y} value={y}>{y}</option>)}
+        <Field id="draft-year" label="Season">
+          <select id="draft-year" value={shown} onChange={(e) => setYear(e.target.value)}>
+            <option value="">All seasons</option>
+            {years.map((y) => <option key={y} value={y}>{L.SEASON_LIST.find((s) => s.start === y)?.label ?? y}</option>)}
           </select>
         </Field>
         <Field id="draft-owner" label="Owner">
@@ -986,10 +990,11 @@ function DraftPage() {
         caption="Draft picks"
         sort={sort}
         onSort={onSort}
-        rowKey={(r) => r.year + "-" + r.pick}
+        rowKey={(r) => r.start + "-" + r.pick}
         rows={rows}
         columns={[
-          { key: "year", label: "Year" },
+          { key: "start", label: "Season", render: (r) => <a href={"#season-" + r.start}>{r.season}</a> },
+          { key: "round", label: "Round", num: true },
           { key: "pick", label: "Pick", num: true },
           { key: "player", label: "Player" },
           { key: "team", label: "Team" },
@@ -1004,9 +1009,14 @@ function DraftPage() {
 export default function App() {
   const hash = useHash();
   const [countTies, setCountTies] = useState(false);
-  const owners = useMemo(() => L.buildOwners(countTies), [countTies]);
+  // Finished seasons are baked into the build; the current season's teams, draft and games load live
+  // from Supabase. ver bumps when the live season arrives so the pages recompute.
+  const [ver, setVer] = useState(0);
+  useEffect(() => {
+    L.loadLiveSeason().then((added) => added && setVer((v) => v + 1)).catch((e) => console.warn("Live season not loaded:", e.message));
+  }, []);
+  const owners = useMemo(() => L.buildOwners(countTies), [countTies, ver]);
   const [h2hFilter, setH2hFilter] = useState({ phase: "all", from: null, to: null });
-  // Finished seasons are baked into the build; the current season's games load live from Supabase.
   const [liveGames, setLiveGames] = useState(0);
   useEffect(() => {
     H.loadLiveGames().then(setLiveGames).catch((e) => console.warn("Live games not loaded:", e.message));
@@ -1020,7 +1030,7 @@ export default function App() {
   else if (route === "owners") page = <OwnersPage owners={owners} countTies={countTies} />;
   else if (route === "seasons") page = <SeasonsPage start={param} countTies={countTies} />;
   else if (route === "h2h") page = <H2HPage param={param} countTies={countTies} filter={h2hFilter} setFilter={setH2hFilter} liveGames={liveGames} />;
-  else if (route === "teams") page = <TeamsPage countTies={countTies} />;
+  else if (route === "teams") page = <TeamsPage countTies={countTies} ver={ver} />;
   else if (route === "draft") page = <DraftPage />;
   else page = <RecordBook owners={owners} countTies={countTies} />;
 
@@ -1043,7 +1053,7 @@ export default function App() {
         />
       </div>
       <p className="notice">
-        Preview with data from the commissioner's spreadsheet through 2025-26. It switches to live Yahoo data once access is approved.
+        Results come from Yahoo Fantasy from 2005-06 on (the current season updates nightly). 2004-05 comes from the commissioner's spreadsheet.
       </p>
       {H.IS_SAMPLE && (
         <p className="notice notice-sample">

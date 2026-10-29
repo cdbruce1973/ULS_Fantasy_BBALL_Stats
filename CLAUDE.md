@@ -26,9 +26,9 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 - Head-to-head section built (`src/h2h.js` + H2H views in `App.jsx`, routes `#h2h`, `#h2h-<owner>`, `#h2h-<owner>-vs-<opp>`). It reads `src/matchups.json`, written at build time by `scripts/export_matchups.mjs` from Supabase (needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Netlify env). Empty until Yahoo sync runs; production shows an empty state, PR previews and `SAMPLE_H2H=1` builds show made-up games with a banner.
 
 ## Next steps
-1. Finish backfill of matchups and drafts, validate head-to-head, then enable pg_cron nightly `?current=1`.
+1. Nightly refresh: `supabase/nightly_sync.sql` (pg_cron 09:00 UTC `yahoo-sync?current=1`, then 09:15 UTC Netlify build hook from `sync_config.netlify_build_hook`).
 2. Switch the UI from `data.js` to Supabase reads (supabase-js, anon key); deploy to Netlify.
-3. Head-to-head: built. After the first matchup sync, check it against real data (category stat ids in `CATEGORIES`, playoff flag, owner mapping).
+3. Head-to-head: live with real data since 2026-10-29 (backfill verified against standings).
 4. Open questions: regular-season finish definition (Yahoo playoff seed vs own rule), display names for Pete/Nate/Owen/Erik/Brice/Will vs Yahoo, Yahoo logo file, shared password.
 
 ## Commands

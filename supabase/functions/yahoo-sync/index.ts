@@ -87,12 +87,20 @@ async function syncTeams(seasonId: number, key: string) {
   const { error } = await db.from("teams").upsert(rows, { onConflict: "yahoo_team_key" });
   if (error) throw new Error(`teams upsert: ${error.message}`);
 
-  // 1) owners already known by Yahoo GUID (the reliable key)
-  const { data: owners } = await db.from("owners").select("id, yahoo_guid").not("yahoo_guid", "is", null);
-  for (const o of owners ?? []) {
-    await db.from("teams").update({ owner_id: o.id }).eq("season_id", seasonId).eq("manager_guid", o.yahoo_guid);
+  // Yahoo hides manager GUIDs ("--hidden--"), so owners are matched in two steps.
+  // Teams that already have an owner keep it (the upsert above never touches owner_id).
+  // 1) same team name as last season -> same owner (this is what tells the two "Brendan"s apart)
+  const { data: season } = await db.from("seasons").select("start_year").eq("id", seasonId).single();
+  const { data: prevSeason } = await db.from("seasons").select("id").eq("start_year", season.start_year - 1).maybeSingle();
+  if (prevSeason) {
+    const { data: prev } = await db.from("teams").select("name, owner_id").eq("season_id", prevSeason.id).not("owner_id", "is", null);
+    for (const p of prev ?? []) {
+      await db.from("teams").update({ owner_id: p.owner_id })
+        .eq("season_id", seasonId).ilike("name", p.name.replace(/[\\%_]/g, "\\$&")).is("owner_id", null);
+    }
   }
-  // 2) fall back to nickname aliases, but only when the nickname is unique within the season
+  // 2) fall back to nickname aliases, but only when the nickname is unique within the season.
+  //    Anything still unmatched (a renamed team with a shared nickname) is left for a person to assign.
   const counts = new Map<string, number>();
   for (const r of rows) counts.set(r.manager_name, (counts.get(r.manager_name) ?? 0) + 1);
   const { data: aliases } = await db.from("owner_aliases").select("alias, owner_id");

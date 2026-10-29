@@ -13,7 +13,7 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 - Yahoo labels seasons by START year (2025 = 2025-26). The old sheet labelled by END year. 2004-05 exists only in the sheet.
 - Champions, runner-ups, titles and streaks are DERIVED from data, never hand-counted. The sheet is a guide only.
 - Win % is shown both with and without ties (global toggle). Ignore football/side leagues.
-- Owners are identified by Yahoo manager GUID (`owners.yahoo_guid`, `teams.manager_guid`), NOT by nickname: two owners both show as "Brendan" (Brendan since 2008; BP since 2025).
+- Yahoo hides manager GUIDs (every `teams.manager_guid` is "--hidden--"), so owners are NOT matched by GUID. Seasons 2005-06 to 2025-26 were matched to the sheet by team name + record (all 252 teams, done 2026-10-29). New seasons: `yahoo-sync` carries the owner forward from last season's team with the same name, then falls back to nickname aliases (`owner_aliases`) only when the nickname is unique. Two owners both show as "Brendan" (Brendan since 2008, team Quad Duces; BP since 2025, team Luka Gone-cic). `teams.owner_id` is never overwritten by a re-sync.
 - Display names: Smy, Geoff, Scotty, Aaron, Drewber, AK, Brendan, Klink, Cowan, Evan, Craig, BP, Pete, Nate, Owen, Erik, Brice, Will.
 - Design: green and white, inspired by University Lake School (Lakers/pines). Original pine/lake artwork. Yahoo logo only unaltered, with "Fantasy data provided by Yahoo Fantasy" in the footer (logo file still to be supplied by Craig).
 - Shared league password login is ON HOLD ("wait on the shared pw").
@@ -22,12 +22,11 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 
 ## Status (2026-10-22)
 - UI preview done and published as a Claude artifact (owner pages with banners, mobile-tuned).
-- Yahoo OAuth works (token stored) but every fantasy endpoint returns 403 "not authorized". Yahoo emailed approval; access turns on after the agreement, a NEW app with Fantasy Sports read permission, and the Client ID on the confirmation form (submitted for old and new app). Waiting on Yahoo support.
+- Yahoo API access works (approved 2026-10-29 after a long 403 wait). Teams synced for every season 2005-06 to 2026-27; all teams have owners.
 - Head-to-head section built (`src/h2h.js` + H2H views in `App.jsx`, routes `#h2h`, `#h2h-<owner>`, `#h2h-<owner>-vs-<opp>`). It reads `src/matchups.json`, written at build time by `scripts/export_matchups.mjs` from Supabase (needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Netlify env). Empty until Yahoo sync runs; production shows an empty state, PR previews and `SAMPLE_H2H=1` builds show made-up games with a banner.
-- Owner-key migration applied (owners.yahoo_guid etc., teams.manager_guid). `yahoo-sync` v4 captures GUIDs.
 
 ## Next steps
-1. When Yahoo access works: `net.http_post` to `yahoo-sync?season=2025&parts=teams`, check team rows, manager GUIDs and the two Brendans; fill `owners.yahoo_guid`; backfill all seasons; validate against `data.js`; enable pg_cron nightly `?current=1`.
+1. Finish backfill of matchups and drafts, validate head-to-head, then enable pg_cron nightly `?current=1`.
 2. Switch the UI from `data.js` to Supabase reads (supabase-js, anon key); deploy to Netlify.
 3. Head-to-head: built. After the first matchup sync, check it against real data (category stat ids in `CATEGORIES`, playoff flag, owner mapping).
 4. Open questions: regular-season finish definition (Yahoo playoff seed vs own rule), display names for Pete/Nate/Owen/Erik/Brice/Will vs Yahoo, Yahoo logo file, shared password.

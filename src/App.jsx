@@ -1004,10 +1004,12 @@ function DraftPage() {
   const [sort, onSort] = useSort("start");
   const maxPick = Math.max(0, ...L.DRAFT.map((d) => d.pick));
   const owners = [...new Set(L.DRAFT.map((d) => d.owner))].sort((a, b) => a.localeCompare(b));
-  const q = query.trim().toLowerCase();
+  // Accents are ignored, so "jokic" finds Jokić.
+  const fold = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const q = fold(query.trim());
   const shown = year ?? (q || owner || pick ? "" : String(years[0] ?? ""));
   const rows = sortRows(
-    L.DRAFT.filter((d) => (!shown || d.start === +shown) && (!owner || d.owner === owner) && (!pick || d.pick === +pick) && (!q || d.player.toLowerCase().includes(q))),
+    L.DRAFT.filter((d) => (!shown || d.start === +shown) && (!owner || d.owner === owner) && (!pick || d.pick === +pick) && (!q || fold(d.player).includes(q))),
     sort
   );
   return (
@@ -1042,6 +1044,7 @@ function DraftPage() {
           </select>
         </Field>
       </div>
+      <PlayerFacts rows={rows} query={q} />
       <DataTable
         caption="Draft picks"
         sort={sort}
@@ -1052,13 +1055,42 @@ function DraftPage() {
           { key: "start", label: "Season", render: (r) => <a href={"#season-" + r.start}>{r.season}</a> },
           { key: "round", label: "Round", num: true },
           { key: "pick", label: "Pick", num: true },
-          { key: "player", label: "Player" },
+          { key: "player", label: "Player", render: (r) => <button type="button" className="linkish" onClick={() => setQuery(r.player)} title={`Every time ${r.player} was drafted`}>{r.player}</button> },
           { key: "team", label: "Team" },
           { key: "owner", label: "Owner", render: (r) => <OwnerLink name={r.owner} /> },
         ]}
       />
       </section>
     </>
+  );
+}
+
+// "Did you know" cards when a player search narrows to one to three players.
+function PlayerFacts({ rows, query }) {
+  if (!query) return null;
+  const players = [...new Set(rows.map((r) => r.player))];
+  if (!players.length || players.length > 3) return null;
+  const list = (names) => names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+  return (
+    <div className="facts">
+      {players.map((name) => {
+        const f = L.playerFacts(name);
+        const e = f.earliest;
+        return (
+          <aside key={name} className="fact" aria-label={`Did you know: ${name}`}>
+            <p className="fact-kicker">Did you know?</p>
+            <p className="fact-main">
+              <strong>{name}</strong> has been drafted {f.times === 1 ? "once" : `${f.times} times`}
+              {f.times > 1 && <> by {f.owners === 1 ? "the same owner" : `${f.owners} different owners`}</>}.
+              {f.times > 1 && f.most > 1 && <> {list(f.topOwners)} drafted {name} the most ({f.most} times).</>}
+            </p>
+            <p className="fact-sub">
+              Earliest: {e.pick === 1 ? "#1 overall" : `pick ${e.pick}`}{e.times > 1 ? `, ${e.times} times, first` : ","} by {e.owner} in {e.season}. {f.times > 1 && <>Average pick {f.avgPick.toFixed(1)}, from {f.first} to {f.last}.</>}
+            </p>
+          </aside>
+        );
+      })}
+    </div>
   );
 }
 

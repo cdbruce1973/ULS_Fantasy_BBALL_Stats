@@ -254,3 +254,13 @@ select.narrow { min-width: 150px; }
 .res-T { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
 .res-run { display: inline-flex; gap: 3px; }
 .res-run .res { width: 16px; height: 16px; font-size: 10px; border-radius: 3px; }
+
+/* draft: "Did you know" cards and player names that filter the table */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 4px 0 18px; }
+.fact { padding: 12px 14px; border-left: 4px solid var(--gold); background: var(--surface-2); border-radius: 0 8px 8px 0; }
+.fact p { margin: 0; }
+.fact-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.fact-main { margin-top: 4px !important; font-size: 15px; }
+.fact-sub { margin-top: 4px !important; font-size: 13px; color: var(--ink-2); }
+.linkish { font: inherit; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.linkish:hover { color: var(--accent); text-decoration-style: solid; }

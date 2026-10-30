@@ -174,3 +174,27 @@ export function repeatChamps(key) {
   }
   return out;
 }
+
+// "Did you know" facts for one player across every draft.
+export function playerFacts(player) {
+  const picks = DRAFT.filter((d) => d.player === player);
+  if (!picks.length) return null;
+  const by = new Map();
+  for (const d of picks) by.set(d.owner, (by.get(d.owner) || 0) + 1);
+  const most = Math.max(...by.values());
+  const best = Math.min(...picks.map((d) => d.pick));
+  const atBest = picks.filter((d) => d.pick === best).sort((a, b) => a.start - b.start);
+  const earliest = { ...atBest[0], times: atBest.length };
+  const starts = picks.map((d) => d.start);
+  return {
+    player,
+    times: picks.length,
+    owners: by.size,
+    most,
+    topOwners: [...by].filter(([, n]) => n === most).map(([o]) => o).sort((a, b) => a.localeCompare(b)),
+    earliest,
+    avgPick: picks.reduce((a, d) => a + d.pick, 0) / picks.length,
+    first: picks.find((d) => d.start === Math.min(...starts)).season,
+    last: picks.find((d) => d.start === Math.max(...starts)).season,
+  };
+}

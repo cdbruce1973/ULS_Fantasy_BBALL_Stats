@@ -265,12 +265,10 @@ select.narrow { min-width: 150px; }
 .linkish { font: inherit; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 .linkish:hover { color: var(--accent); text-decoration-style: solid; }
 
-/* "What can I do here?" */
-.help { margin: 12px 0 -8px; font-size: 14px; }
-.help summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-weight: 600; list-style: none; }
+/* "What can I do here?": a link at the top right of the page that opens a pop-up over the content */
+.help { position: relative; height: 0; z-index: 20; }
+.help summary { position: absolute; right: 0; top: 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; list-style: none; white-space: nowrap; }
 .help summary::-webkit-details-marker { display: none; }
 .help summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 12px; font-weight: 800; }
-.help[open] { margin-bottom: 4px; }
-.help[open] summary { margin-bottom: 8px; }
-.help ul { margin: 0; padding: 12px 16px 12px 32px; max-width: 72ch; background: var(--surface-2); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; color: var(--ink-2); }
+.help ul { position: absolute; right: 0; top: 38px; width: min(420px, calc(100vw - 32px)); margin: 0; padding: 14px 18px 14px 34px; font-size: 14px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
 .help li + li { margin-top: 6px; }

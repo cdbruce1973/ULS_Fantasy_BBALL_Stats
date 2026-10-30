@@ -71,10 +71,20 @@ const HELP = {
 function PageHelp({ page }) {
   const items = HELP[page];
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
   useEffect(() => setOpen(false), [page]);
+  // Close the pop-up on a click outside it or on Escape.
+  useEffect(() => {
+    if (!open) return;
+    const away = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    const esc = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
+  }, [open]);
   if (!items) return null;
   return (
-    <details className="help" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+    <details className="help" ref={ref} open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
       <summary>What can I do here?</summary>
       <ul>
         {items.map((t) => <li key={t}>{t}</li>)}

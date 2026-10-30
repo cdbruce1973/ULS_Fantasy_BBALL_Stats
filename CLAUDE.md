@@ -12,24 +12,30 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 ## Rules and decisions (do not relitigate)
 - Yahoo labels seasons by START year (2025 = 2025-26). The old sheet labelled by END year. 2004-05 exists only in the sheet.
 - Champions, runner-ups, titles and streaks are DERIVED from data, never hand-counted. The sheet is a guide only.
+- Finishes (Craig, 2026-10-29): tournament finish = Yahoo `final_rank`; regular-season finish = Yahoo `playoff_seed` (2019-20 has no seeds, so `final_rank`). This corrected two sheet errors: 2005-06 reg 3rd is Drewber (sheet said AK), 2015-16 reg 3rd is Aaron (sheet said Pete). All 252 records and every tournament top 3 matched the sheet. 2004-05 is sheet-only.
 - Win % is shown both with and without ties (global toggle). Ignore football/side leagues.
 - Yahoo hides manager GUIDs (every `teams.manager_guid` is "--hidden--"), so owners are NOT matched by GUID. Seasons 2005-06 to 2025-26 were matched to the sheet by team name + record (all 252 teams, done 2026-10-29). New seasons: `yahoo-sync` carries the owner forward from last season's team with the same name, then falls back to nickname aliases (`owner_aliases`) only when the nickname is unique. Two owners both show as "Brendan" (Brendan since 2008, team Quad Duces; BP since 2025, team Luka Gone-cic). `teams.owner_id` is never overwritten by a re-sync.
 - Display names: Smy, Geoff, Scotty, Aaron, Drewber, AK, Brendan, Klink, Cowan, Evan, Craig, BP, Pete, Nate, Owen, Erik, Brice, Will.
 - Design: green and white, inspired by University Lake School (Lakers/pines). Original pine/lake artwork. Footer carries Yahoo's required "Powered by Yahoo" logo, hotlinked unaltered from poweredby.yahoo.com (purple on light, white in dark mode) and linked to https://www.yahoo.com/?ilc=401 per developer.yahoo.com/attribution, plus "Fantasy data provided by Yahoo Fantasy".
 - Shared league password login is ON HOLD ("wait on the shared pw").
+- League stats are PUBLIC (Craig, 2026-10-29): anon can read owners, seasons, teams, matchups, draft_picks and the `h2h_games` view (`supabase/public_read.sql`). The publishable key lives in `src/supabase.js`. Tokens/sync config stay service-role only.
+- No scheduled Netlify rebuilds (they cost credits). Finished seasons are baked into the build; the current season loads live from Supabase in the browser. One rebuild per year at season end.
 - Never put Yahoo secrets, the sync key, or tokens in chat or in git. Secrets live in Supabase (`YAHOO_CLIENT_ID`, `YAHOO_CLIENT_SECRET`) and `sync_config`.
 - Craig signs in to sites himself; DDL/delete statements through the Supabase tool often get cancelled, so give him SQL to run in the SQL editor instead.
 
-## Status (2026-10-22)
-- UI preview done and published as a Claude artifact (owner pages with banners, mobile-tuned).
-- Yahoo API access works (approved 2026-10-29 after a long 403 wait). Teams synced for every season 2005-06 to 2026-27; all teams have owners.
-- Head-to-head section built (`src/h2h.js` + H2H views in `App.jsx`, routes `#h2h`, `#h2h-<owner>`, `#h2h-<owner>-vs-<opp>`). It reads `src/matchups.json`, written at build time by `scripts/export_matchups.mjs` from Supabase (needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Netlify env). Empty until Yahoo sync runs; production shows an empty state, PR previews and `SAMPLE_H2H=1` builds show made-up games with a banner.
+## Status (2026-10-29)
+- Yahoo API access works. Teams, matchups and drafts synced for every season 2005-06 to 2026-27; all teams have owners.
+- Every page reads Yahoo data. Finished seasons are written at build time by `scripts/export_data.mjs` (public tables, no secrets) into `src/matchups.json` (H2H games) and `src/history.json` (teams, finishes, full drafts, via `src/league.js`). 2004-05 comes from `src/data.js` (the sheet). The current season loads live in the browser: `L.loadLiveSeason()` (teams, draft) and `H.loadLiveGames()` (H2H). A season in progress has no finishes and is left out of best-season lists, banners and per-season averages.
+- Head-to-head routes: `#h2h`, `#h2h-<owner>`, `#h2h-<owner>-vs-<opp>`. `SAMPLE_H2H=1` builds with no real games show made-up games with a banner.
+- Nightly refresh: `supabase/nightly_sync.sql` (pg_cron 09:00 UTC `yahoo-sync?current=1`; no rebuild).
 
 ## Next steps
-1. Finish backfill of matchups and drafts, validate head-to-head, then enable pg_cron nightly `?current=1`.
-2. Switch the UI from `data.js` to Supabase reads (supabase-js, anon key); deploy to Netlify.
-3. Head-to-head: built. After the first matchup sync, check it against real data (category stat ids in `CATEGORIES`, playoff flag, owner mapping).
-4. Open questions: regular-season finish definition (Yahoo playoff seed vs own rule), display names for Pete/Nate/Owen/Erik/Brice/Will vs Yahoo, Yahoo logo file, shared password.
+1. Open questions: display names for Pete/Nate/Owen/Erik/Brice/Will vs Yahoo, Yahoo logo file, shared password.
+
+## End of season (once a year, after the final playoff week)
+1. Run a full sync of the finished season: `yahoo-sync?season=<start year>` (teams, matchups, draft) and check it.
+2. In `seasons`, set `is_current = false` on the finished season and `true` on the next one (insert the next season with its Yahoo league key first if needed).
+3. In Netlify, Deploys > Trigger deploy > Deploy site (one build). The export bakes the finished season into `src/matchups.json` and `src/history.json`; from then on it never changes.
 
 ## Commands
 - Preview with sample H2H data: `SAMPLE_H2H=1 npm run dev`

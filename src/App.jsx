@@ -163,11 +163,11 @@ function Field({ id, label, children }) {
 }
 
 // ---------- Record book ----------
-function Banner({ b }) {
+function Banner({ b, copy }) {
   const { season, champ, runnerUp, sweep } = b;
   return (
-    <li className={"banner" + (sweep ? " banner-sweep" : "")}>
-      <a href={"#season-" + season.start} title={`Runner-up: ${runnerUp ? runnerUp.owner : "n/a"}${sweep ? ". Also won the regular season." : ""}`}>
+    <li className={"banner" + (sweep ? " banner-sweep" : "")} aria-hidden={copy || undefined}>
+      <a href={"#season-" + season.start} tabIndex={copy ? -1 : undefined} title={`Runner-up: ${runnerUp ? runnerUp.owner : "n/a"}${sweep ? ". Also won the regular season." : ""}`}>
         <Pine className="banner-crest" />
         <span className="banner-year">{season.label}</span>
         <span className="banner-name">{champ ? champ.owner : "-"}</span>
@@ -177,23 +177,66 @@ function Banner({ b }) {
   );
 }
 
-function Rafters({ owner }) {
+// drift: the banners creep slowly sideways in a loop. They stop while the pointer is over them or a
+// banner has focus, can still be scrolled by hand, and stay still for people who ask for reduced motion.
+function Rafters({ owner, drift }) {
   const banners = useMemo(
     () => L.buildBanners().filter((b) => !owner || (b.champ && b.champ.owner === owner)),
     [owner]
   );
+  const ref = useRef(null);
+  const loop = drift && banners.length > 0;
+  useEffect(() => {
+    const el = ref.current;
+    if (!loop || !el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let paused = false, resumeAt = 0, last = performance.now(), pos = el.scrollLeft, frame;
+    const pause = () => { paused = true; };
+    const resume = () => { paused = false; resumeAt = performance.now() + 1500; pos = el.scrollLeft; };
+    const touch = () => { resumeAt = performance.now() + 4000; pos = el.scrollLeft; };
+    const step = (now) => {
+      const dt = Math.min(now - last, 100);
+      last = now;
+      const half = el.scrollWidth / 2; // the row is drawn twice, so half its width is one full lap
+      if (!paused && now > resumeAt && el.scrollWidth > el.clientWidth) {
+        pos += dt * 0.03; // about 30 pixels a second
+        if (pos >= half) pos -= half;
+        el.scrollLeft = pos;
+      } else if (el.scrollLeft >= half) {
+        el.scrollLeft -= half;
+      }
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    el.addEventListener("pointerenter", pause);
+    el.addEventListener("pointerleave", resume);
+    el.addEventListener("focusin", pause);
+    el.addEventListener("focusout", resume);
+    el.addEventListener("touchstart", touch, { passive: true });
+    el.addEventListener("wheel", touch, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("pointerenter", pause);
+      el.removeEventListener("pointerleave", resume);
+      el.removeEventListener("focusin", pause);
+      el.removeEventListener("focusout", resume);
+      el.removeEventListener("touchstart", touch);
+      el.removeEventListener("wheel", touch);
+    };
+  }, [loop]);
   if (owner && !banners.length) return null;
   return (
     <section aria-labelledby="banners-h">
       <div className="section-head">
-        <h2 id="banners-h">{owner ? "Championship banners" : "Championship banners"}</h2>
+        <h2 id="banners-h">Championship banners</h2>
         <p className="hint">{owner ? "Newest first. Gold banners also won the regular season." : "Newest first. Gold banners won the regular season too."}</p>
       </div>
-      <div className="rafters" tabIndex={0} aria-label="Championship banners, scrollable">
+      <div className="rafters" ref={ref} tabIndex={0} aria-label="Championship banners, scrollable">
         <ol className="banner-row">
           {banners.map((b) => (
             <Banner key={b.season.start} b={b} />
           ))}
+          {/* A second copy, hidden from screen readers and keyboard, lets the drift loop without a jump. */}
+          {loop && banners.map((b) => <Banner key={"copy" + b.season.start} b={b} copy />)}
         </ol>
       </div>
     </section>
@@ -266,12 +309,14 @@ function RecordBook({ owners, countTies }) {
   const sweeps = L.sweeps();
   return (
     <>
-      <header className="page-head">
-        <h1>Record book</h1>
-        <p className="lede">Every title, streak and standing since the first season in 2004-05.</p>
+      <header className="page-head page-head-home">
+        <div>
+          <h1>Record book</h1>
+          <p className="lede">Every title, streak and standing since 2004-05.</p>
+        </div>
         <Shoreline />
       </header>
-      <Rafters />
+      <Rafters drift />
 
       <section aria-labelledby="podium-h">
         <div className="section-head">
@@ -951,16 +996,18 @@ function TeamsPage({ countTies, ver }) {
 // ---------- Draft ----------
 function DraftPage() {
   const years = [...new Set(L.DRAFT.map((d) => d.start))].sort((a, b) => b - a);
-  // Opens on the latest draft; searching a player looks across every year.
+  // Opens on the latest draft; searching a player, an owner or a pick number looks across every year.
   const [year, setYear] = useState(null);
   const [owner, setOwner] = useState("");
+  const [pick, setPick] = useState("");
   const [query, setQuery] = useState("");
   const [sort, onSort] = useSort("start");
+  const maxPick = Math.max(0, ...L.DRAFT.map((d) => d.pick));
   const owners = [...new Set(L.DRAFT.map((d) => d.owner))].sort((a, b) => a.localeCompare(b));
   const q = query.trim().toLowerCase();
-  const shown = year ?? (q || owner ? "" : String(years[0] ?? ""));
+  const shown = year ?? (q || owner || pick ? "" : String(years[0] ?? ""));
   const rows = sortRows(
-    L.DRAFT.filter((d) => (!shown || d.start === +shown) && (!owner || d.owner === owner) && (!q || d.player.toLowerCase().includes(q))),
+    L.DRAFT.filter((d) => (!shown || d.start === +shown) && (!owner || d.owner === owner) && (!pick || d.pick === +pick) && (!q || d.player.toLowerCase().includes(q))),
     sort
   );
   return (
@@ -977,6 +1024,12 @@ function DraftPage() {
           <select id="draft-year" value={shown} onChange={(e) => setYear(e.target.value)}>
             <option value="">All seasons</option>
             {years.map((y) => <option key={y} value={y}>{L.SEASON_LIST.find((s) => s.start === y)?.label ?? y}</option>)}
+          </select>
+        </Field>
+        <Field id="draft-pick" label="Pick">
+          <select id="draft-pick" value={pick} onChange={(e) => setPick(e.target.value)}>
+            <option value="">All picks</option>
+            {Array.from({ length: maxPick }, (_, i) => i + 1).map((n) => <option key={n} value={n}>#{n}</option>)}
           </select>
         </Field>
         <Field id="draft-owner" label="Owner">

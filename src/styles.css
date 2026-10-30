@@ -264,3 +264,13 @@ select.narrow { min-width: 150px; }
 .fact-sub { margin-top: 4px !important; font-size: 13px; color: var(--ink-2); }
 .linkish { font: inherit; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 .linkish:hover { color: var(--accent); text-decoration-style: solid; }
+
+/* "What can I do here?" */
+.help { margin: 12px 0 -8px; font-size: 14px; }
+.help summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-weight: 600; list-style: none; }
+.help summary::-webkit-details-marker { display: none; }
+.help summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 12px; font-weight: 800; }
+.help[open] { margin-bottom: 4px; }
+.help[open] summary { margin-bottom: 8px; }
+.help ul { margin: 0; padding: 12px 16px 12px 32px; max-width: 72ch; background: var(--surface-2); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; color: var(--ink-2); }
+.help li + li { margin-top: 6px; }

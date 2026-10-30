@@ -28,6 +28,61 @@ function parseRoute(hash) {
   return [hash, null];
 }
 
+// ---------- page help ----------
+// "What can I do here?" for each page: what it shows and the questions it answers.
+const HELP = {
+  home: [
+    "The all-time highlights of the league, from 2004-05 through the last completed season.",
+    "Championship banners: every tournament champion, newest first. Gold banners won the regular season too. Hover to pause them, or tap one to open that season.",
+    "Podium finishes: who has the most 1st, 2nd and 3rd place finishes, in the tournament and the regular season, and how often they make the top three.",
+    "Career leaders, best single seasons, and streaks of back-to-back top-three finishes.",
+    "Use the Ties toggle at the top to figure win % with or without ties.",
+  ],
+  owners: [
+    "Career totals for every owner: seasons, record, win %, wins per season and podium finishes.",
+    "Sort by any column, search a name, or show only owners with 10 or more seasons.",
+    "Pick an owner to open their page.",
+  ],
+  owner: [
+    "One owner's career: record, win %, titles and regular-season finishes.",
+    "Their championship banners, a win % trend by season (gold dots are titles), and every team they ran.",
+    "Follow the head-to-head link to see how they do against each opponent.",
+  ],
+  seasons: [
+    "Pick a season to see the tournament and regular-season top three and the full standings.",
+    "The season in progress shows live standings that update nightly; finishes appear after the playoffs.",
+  ],
+  h2h: [
+    "Every owner's record against every other owner, built from the weekly matchups.",
+    "Filter by regular season or playoffs, or a range of seasons.",
+    "Pick an owner to see their nemesis and favorite opponent, or two owners to see their whole rivalry, including categories won and biggest blowouts.",
+  ],
+  teams: [
+    "Every team from every season, with its owner, record and finishes.",
+    "Team names change often, so search a name (or part of one) to find who had it.",
+  ],
+  draft: [
+    "Average draft position: where each owner usually picks in round 1, and how often they had the #1 pick.",
+    "Every pick of every draft since 2005-06. Filter by season, pick number (try #1 for every first overall pick) or owner.",
+    "Search a player, or click a player's name, for a Did you know card: how often they were drafted, who took them most, and their earliest pick.",
+  ],
+};
+
+function PageHelp({ page }) {
+  const items = HELP[page];
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [page]);
+  if (!items) return null;
+  return (
+    <details className="help" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary>What can I do here?</summary>
+      <ul>
+        {items.map((t) => <li key={t}>{t}</li>)}
+      </ul>
+    </details>
+  );
+}
+
 // ---------- artwork (original drawings: a pine and a shoreline) ----------
 function Pine({ className }) {
   return (
@@ -1141,6 +1196,10 @@ export default function App() {
   }, []);
   const [route, param] = parseRoute(hash);
   useEffect(() => { window.scrollTo(0, 0); }, [hash]);
+  // On phones the menu is a swipeable row; keep the current page's link in view.
+  useEffect(() => {
+    document.querySelector('.nav a[aria-current="page"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [hash]);
   const active = route === "owner" ? "owners" : route;
 
   let page;
@@ -1175,6 +1234,7 @@ export default function App() {
           Head-to-head numbers on this preview are made up so the pages can be tried out. Real matchups load from Yahoo.
         </p>
       )}
+      <PageHelp page={HELP[route] ? route : "home"} />
       <main>{page}</main>
       <footer className="foot">
         {/* Yahoo's required attribution (developer.yahoo.com/attribution): official logo, unaltered, linked to yahoo.com. */}

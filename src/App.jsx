@@ -1052,9 +1052,6 @@ export default function App() {
           options={[[false, "Ties left out"], [true, "Ties count"]]}
         />
       </div>
-      <p className="notice">
-        Results come from Yahoo Fantasy from 2005-06 on (the current season updates nightly). 2004-05 comes from the commissioner's spreadsheet.
-      </p>
       {H.IS_SAMPLE && (
         <p className="notice notice-sample">
           Head-to-head numbers on this preview are made up so the pages can be tried out. Real matchups load from Yahoo.

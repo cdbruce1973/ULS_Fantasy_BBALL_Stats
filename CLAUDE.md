@@ -15,7 +15,7 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 - Finishes (Craig, 2026-10-29): tournament finish = Yahoo `final_rank`; regular-season finish = Yahoo `playoff_seed` (2019-20 has no seeds, so `final_rank`). This corrected two sheet errors: 2005-06 reg 3rd is Drewber (sheet said AK), 2015-16 reg 3rd is Aaron (sheet said Pete). All 252 records and every tournament top 3 matched the sheet. 2004-05 is sheet-only.
 - Win % is shown both with and without ties (global toggle). Ignore football/side leagues.
 - Yahoo hides manager GUIDs (every `teams.manager_guid` is "--hidden--"), so owners are NOT matched by GUID. Seasons 2005-06 to 2025-26 were matched to the sheet by team name + record (all 252 teams, done 2026-10-29). New seasons: `yahoo-sync` carries the owner forward from last season's team with the same name, then falls back to nickname aliases (`owner_aliases`) only when the nickname is unique. Two owners both show as "Brendan" (Brendan since 2008, team Quad Duces; BP since 2025, team Luka Gone-cic). `teams.owner_id` is never overwritten by a re-sync.
-- Display names: Smy, Geoff, Scotty, Aaron, Drewber, AK, Brendan, Klink, Cowan, Evan, Craig, BP, Pete, Nate, Owen, Erik, Brice, Will.
+- Display names: Smy, Geoff, Scotty, Aaron, Drewber, AK, Brendan, Klink, Cowan, Evan, Craig, BP, Pete, Nate, Owen, Erik, Brice, Will, Will V (Craig, 2026-10-30: keep these as is). Will V co-owned/ran Three Point Club for Cowan in 2009-10 and 2010-11 and gets credit for those two seasons (Cowan returned 2011-12, same team name); he is not the Will of 2018-19.
 - Design: green and white, inspired by University Lake School (Lakers/pines). Original pine/lake artwork. Footer carries Yahoo's required "Powered by Yahoo" logo, hotlinked unaltered from poweredby.yahoo.com (purple on light, white in dark mode) and linked to https://www.yahoo.com/?ilc=401 per developer.yahoo.com/attribution, plus "Fantasy data provided by Yahoo Fantasy".
 - Shared league password login is ON HOLD ("wait on the shared pw").
 - League stats are PUBLIC (Craig, 2026-10-29): anon can read owners, seasons, teams, matchups, draft_picks and the `h2h_games` view (`supabase/public_read.sql`). The publishable key lives in `src/supabase.js`. Tokens/sync config stay service-role only.
@@ -30,7 +30,7 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 - Nightly refresh: `supabase/nightly_sync.sql` (pg_cron 09:00 UTC `yahoo-sync?current=1`; no rebuild).
 
 ## Next steps
-1. Open questions: display names for Pete/Nate/Owen/Erik/Brice/Will vs Yahoo, Yahoo logo file, shared password.
+1. Open question: shared password (likely unneeded: production is public, Netlify team login only guards previews).
 
 ## End of season (once a year, after the final playoff week)
 1. Run a full sync of the finished season: `yahoo-sync?season=<start year>` (teams, matchups, draft) and check it.

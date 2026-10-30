@@ -1,4 +1,4 @@
-/* Laker Fantasy Bball
+/* Laker Fantasy NBA
    Colors take their cue from University Lake School (green and white, Lakers, pines on Nagawicka Lake).
    Layout: one column, content-first. The memorable moment is the row of championship banners
    hung from a beam; everything else stays quiet tables and ledgers. */
@@ -209,6 +209,15 @@ input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220p
 
 /* phones: tighter vertical rhythm, stats in two even columns, record on its own row */
 @media (max-width: 640px) {
+  /* masthead: name and ties toggle share the first row, the menu is one swipeable row under them */
+  .masthead { gap: 10px 8px; padding-bottom: 8px; }
+  .brand { font-size: 22px; gap: 6px; }
+  .brand svg { width: 16px; height: 16px; }
+  .seg { order: 2; }
+  .seg button { font-size: 12px; padding: 5px 8px; }
+  .nav { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { flex: none; padding: 5px 9px; font-size: 15px; }
   main { gap: 32px; padding-top: 20px; }
   .section-head { margin-bottom: 10px; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }

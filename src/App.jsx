@@ -312,7 +312,7 @@ function RecordBook({ owners, countTies }) {
       <header className="page-head page-head-home">
         <div>
           <h1>Record book</h1>
-          <p className="lede">Every title, streak and standing since 2004-05.</p>
+          <p className="lede">Every title, streak and standing, 2004-05 through {L.LAST_FINISHED}.</p>
         </div>
         <Shoreline />
       </header>
@@ -392,7 +392,7 @@ function OwnersPage({ owners, countTies }) {
     <>
       <header className="page-head">
         <h1>Owners</h1>
-        <p className="lede">Career totals for everyone who has run a team. {countTies ? "Win % counts ties as games." : "Win % leaves ties out."}</p>
+        <p className="lede">Career totals for everyone who has run a team, through {L.LAST_FINISHED}. {countTies ? "Win % counts ties as games." : "Win % leaves ties out."}</p>
       </header>
       <div className="controls">
         <Field id="owner-search" label="Search owners">
@@ -484,7 +484,7 @@ function OwnerPage({ slug, owners, countTies }) {
       <header className="page-head">
         <h1>{o.name}</h1>
         <p className="lede">
-          {o.seasons} seasons, {o.first} to {o.last}.
+          {o.seasons} completed {o.seasons === 1 ? "season" : "seasons"}, {o.first} to {o.last}{o.inProgress && `, plus ${o.inProgress} in progress`}.
           {H.H2H_OWNERS.includes(o.name) && <> <a href={"#h2h-" + o.slug}>Head-to-head records</a></>}
         </p>
       </header>
@@ -501,7 +501,7 @@ function OwnerPage({ slug, owners, countTies }) {
           <h2 id="trend-h">Win % by season</h2>
           <p className="hint">Gold dots are tournament titles. The dashed line marks 50%.</p>
         </div>
-        <Sparkline rows={o.rows} countTies={countTies} />
+        <Sparkline rows={o.rows.filter((r) => !r.current)} countTies={countTies} />
       </section>
       <section aria-labelledby="by-season-h">
         <div className="section-head"><h2 id="by-season-h">Season by season</h2></div>
@@ -512,7 +512,7 @@ function OwnerPage({ slug, owners, countTies }) {
           rowKey={(r) => r.start}
           rows={rows}
           columns={[
-            { key: "start", label: "Season", render: (r) => <a href={"#season-" + r.start}>{r.season}</a> },
+            { key: "start", label: "Season", render: (r) => <><a href={"#season-" + r.start}>{r.season}</a>{r.current && <span className="dim"> in progress</span>}</> },
             { key: "team", label: "Team" },
             { key: "w", label: "Record", num: true, render: record },
             { key: "pct", label: "Win %", num: true, render: (r) => L.fmtPct(r.pct) },
@@ -1016,6 +1016,9 @@ function DraftPage() {
         <h1>Draft history</h1>
         <p className="lede">Every pick of every draft since {L.SEASON_LIST.find((s) => s.start === years[years.length - 1])?.label}, from Yahoo.</p>
       </header>
+      <DraftSlots />
+      <section aria-labelledby="picks-h">
+      <div className="section-head"><h2 id="picks-h">Every pick</h2></div>
       <div className="controls">
         <Field id="draft-search" label="Search player">
           <input id="draft-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Try Luka" />
@@ -1054,7 +1057,37 @@ function DraftPage() {
           { key: "owner", label: "Owner", render: (r) => <OwnerLink name={r.owner} /> },
         ]}
       />
+      </section>
     </>
+  );
+}
+
+// Average draft slot: the owner's round 1 pick, for owners with 10 or more drafts.
+function DraftSlots() {
+  const [sort, onSort] = useSort("avg", "asc");
+  const rows = sortRows(L.draftSlots(10), sort);
+  return (
+    <section aria-labelledby="slots-h">
+      <div className="section-head">
+        <h2 id="slots-h">Average draft position</h2>
+        <p className="hint">Each owner's first-round pick, for owners with 10 or more drafts. Lower is earlier.</p>
+      </div>
+      <DataTable
+        caption="Average draft position by owner"
+        sort={sort}
+        onSort={onSort}
+        rowKey={(r) => r.owner}
+        rows={rows}
+        columns={[
+          { key: "owner", label: "Owner", render: (r) => <OwnerLink name={r.owner} /> },
+          { key: "drafts", label: "Drafts", num: true },
+          { key: "avg", label: "Avg pick", num: true, render: (r) => r.avg.toFixed(1) },
+          { key: "firsts", label: "#1 picks", num: true, render: (r) => r.firsts || <span className="dim">-</span> },
+          { key: "best", label: "Earliest", num: true },
+          { key: "worst", label: "Latest", num: true },
+        ]}
+      />
+    </section>
   );
 }
 
@@ -1090,7 +1123,7 @@ export default function App() {
   return (
     <div className="shell">
       <div className="masthead">
-        <a className="brand" href="#"><Pine />Laker Fantasy Bball</a>
+        <a className="brand" href="#"><Pine />Laker Fantasy NBA</a>
         <nav aria-label="Main" className="nav">
           {NAV.map(([id, label]) => (
             <a key={id || "home"} href={"#" + id} aria-current={active === id || (id === "" && !NAV.some(([n]) => n === active) ) ? "page" : undefined}>

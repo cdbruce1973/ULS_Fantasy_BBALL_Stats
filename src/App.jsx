@@ -28,6 +28,71 @@ function parseRoute(hash) {
   return [hash, null];
 }
 
+// ---------- page help ----------
+// "What can I do here?" for each page: what it shows and the questions it answers.
+const HELP = {
+  home: [
+    "The all-time highlights of the league, from 2004-05 through the last completed season.",
+    "Championship banners: every tournament champion, newest first. Gold banners won the regular season too. Hover to pause them, or tap one to open that season.",
+    "Podium finishes: who has the most 1st, 2nd and 3rd place finishes, in the tournament and the regular season, and how often they make the top three.",
+    "Career leaders, best single seasons, and streaks of back-to-back top-three finishes.",
+    "Use the Ties toggle at the top to figure win % with or without ties.",
+  ],
+  owners: [
+    "Career totals for every owner: seasons, record, win %, wins per season and podium finishes.",
+    "Sort by any column, search a name, or show only owners with 10 or more seasons.",
+    "Pick an owner to open their page.",
+  ],
+  owner: [
+    "One owner's career: record, win %, titles and regular-season finishes.",
+    "Their championship banners, a win % trend by season (gold dots are titles), and every team they ran.",
+    "Follow the head-to-head link to see how they do against each opponent.",
+  ],
+  seasons: [
+    "Pick a season to see the tournament and regular-season top three and the full standings.",
+    "The season in progress shows live standings that update nightly; finishes appear after the playoffs.",
+  ],
+  h2h: [
+    "Every owner's record against every other owner, built from the weekly matchups.",
+    "Filter by regular season or playoffs, or a range of seasons.",
+    "Pick an owner to see their nemesis and favorite opponent, or two owners to see their whole rivalry, including categories won and biggest blowouts.",
+  ],
+  teams: [
+    "Every team from every season, with its owner, record and finishes.",
+    "Team names change often, so search a name (or part of one) to find who had it.",
+  ],
+  draft: [
+    "Average draft position: where each owner usually picks in round 1, and how often they had the #1 pick.",
+    "Every pick of every draft since 2005-06. Filter by season, pick number (try #1 for every first overall pick) or owner.",
+    "Search a player, or click a player's name, for a Did you know card: how often they were drafted, who took them most, and their earliest pick.",
+  ],
+};
+
+function PageHelp({ page }) {
+  const items = HELP[page];
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => setOpen(false), [page]);
+  // Close the pop-up on a click outside it or on Escape.
+  useEffect(() => {
+    if (!open) return;
+    const away = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    const esc = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
+  }, [open]);
+  if (!items) return null;
+  return (
+    <details className="help" ref={ref} open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary>What can I do here?</summary>
+      <ul>
+        {items.map((t) => <li key={t}>{t}</li>)}
+      </ul>
+    </details>
+  );
+}
+
 // ---------- artwork (original drawings: a pine and a shoreline) ----------
 function Pine({ className }) {
   return (
@@ -163,11 +228,11 @@ function Field({ id, label, children }) {
 }
 
 // ---------- Record book ----------
-function Banner({ b }) {
+function Banner({ b, copy }) {
   const { season, champ, runnerUp, sweep } = b;
   return (
-    <li className={"banner" + (sweep ? " banner-sweep" : "")}>
-      <a href={"#season-" + season.start} title={`Runner-up: ${runnerUp ? runnerUp.owner : "n/a"}${sweep ? ". Also won the regular season." : ""}`}>
+    <li className={"banner" + (sweep ? " banner-sweep" : "")} aria-hidden={copy || undefined}>
+      <a href={"#season-" + season.start} tabIndex={copy ? -1 : undefined} title={`Runner-up: ${runnerUp ? runnerUp.owner : "n/a"}${sweep ? ". Also won the regular season." : ""}`}>
         <Pine className="banner-crest" />
         <span className="banner-year">{season.label}</span>
         <span className="banner-name">{champ ? champ.owner : "-"}</span>
@@ -177,23 +242,66 @@ function Banner({ b }) {
   );
 }
 
-function Rafters({ owner }) {
+// drift: the banners creep slowly sideways in a loop. They stop while the pointer is over them or a
+// banner has focus, can still be scrolled by hand, and stay still for people who ask for reduced motion.
+function Rafters({ owner, drift }) {
   const banners = useMemo(
     () => L.buildBanners().filter((b) => !owner || (b.champ && b.champ.owner === owner)),
     [owner]
   );
+  const ref = useRef(null);
+  const loop = drift && banners.length > 0;
+  useEffect(() => {
+    const el = ref.current;
+    if (!loop || !el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let paused = false, resumeAt = 0, last = performance.now(), pos = el.scrollLeft, frame;
+    const pause = () => { paused = true; };
+    const resume = () => { paused = false; resumeAt = performance.now() + 1500; pos = el.scrollLeft; };
+    const touch = () => { resumeAt = performance.now() + 4000; pos = el.scrollLeft; };
+    const step = (now) => {
+      const dt = Math.min(now - last, 100);
+      last = now;
+      const half = el.scrollWidth / 2; // the row is drawn twice, so half its width is one full lap
+      if (!paused && now > resumeAt && el.scrollWidth > el.clientWidth) {
+        pos += dt * 0.03; // about 30 pixels a second
+        if (pos >= half) pos -= half;
+        el.scrollLeft = pos;
+      } else if (el.scrollLeft >= half) {
+        el.scrollLeft -= half;
+      }
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    el.addEventListener("pointerenter", pause);
+    el.addEventListener("pointerleave", resume);
+    el.addEventListener("focusin", pause);
+    el.addEventListener("focusout", resume);
+    el.addEventListener("touchstart", touch, { passive: true });
+    el.addEventListener("wheel", touch, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("pointerenter", pause);
+      el.removeEventListener("pointerleave", resume);
+      el.removeEventListener("focusin", pause);
+      el.removeEventListener("focusout", resume);
+      el.removeEventListener("touchstart", touch);
+      el.removeEventListener("wheel", touch);
+    };
+  }, [loop]);
   if (owner && !banners.length) return null;
   return (
     <section aria-labelledby="banners-h">
       <div className="section-head">
-        <h2 id="banners-h">{owner ? "Championship banners" : "Championship banners"}</h2>
+        <h2 id="banners-h">Championship banners</h2>
         <p className="hint">{owner ? "Newest first. Gold banners also won the regular season." : "Newest first. Gold banners won the regular season too."}</p>
       </div>
-      <div className="rafters" tabIndex={0} aria-label="Championship banners, scrollable">
+      <div className="rafters" ref={ref} tabIndex={0} aria-label="Championship banners, scrollable">
         <ol className="banner-row">
           {banners.map((b) => (
             <Banner key={b.season.start} b={b} />
           ))}
+          {/* A second copy, hidden from screen readers and keyboard, lets the drift loop without a jump. */}
+          {loop && banners.map((b) => <Banner key={"copy" + b.season.start} b={b} copy />)}
         </ol>
       </div>
     </section>
@@ -266,12 +374,14 @@ function RecordBook({ owners, countTies }) {
   const sweeps = L.sweeps();
   return (
     <>
-      <header className="page-head">
-        <h1>Record book</h1>
-        <p className="lede">Every title, streak and standing since the first season in 2004-05.</p>
+      <header className="page-head page-head-home">
+        <div>
+          <h1>Record book</h1>
+          <p className="lede">Every title, streak and standing, 2004-05 through {L.LAST_FINISHED}.</p>
+        </div>
         <Shoreline />
       </header>
-      <Rafters />
+      <Rafters drift />
 
       <section aria-labelledby="podium-h">
         <div className="section-head">
@@ -347,7 +457,7 @@ function OwnersPage({ owners, countTies }) {
     <>
       <header className="page-head">
         <h1>Owners</h1>
-        <p className="lede">Career totals for everyone who has run a team. {countTies ? "Win % counts ties as games." : "Win % leaves ties out."}</p>
+        <p className="lede">Career totals for everyone who has run a team, through {L.LAST_FINISHED}. {countTies ? "Win % counts ties as games." : "Win % leaves ties out."}</p>
       </header>
       <div className="controls">
         <Field id="owner-search" label="Search owners">
@@ -439,7 +549,7 @@ function OwnerPage({ slug, owners, countTies }) {
       <header className="page-head">
         <h1>{o.name}</h1>
         <p className="lede">
-          {o.seasons} seasons, {o.first} to {o.last}.
+          {o.seasons} completed {o.seasons === 1 ? "season" : "seasons"}, {o.first} to {o.last}{o.inProgress && `, plus ${o.inProgress} in progress`}.
           {H.H2H_OWNERS.includes(o.name) && <> <a href={"#h2h-" + o.slug}>Head-to-head records</a></>}
         </p>
       </header>
@@ -456,7 +566,7 @@ function OwnerPage({ slug, owners, countTies }) {
           <h2 id="trend-h">Win % by season</h2>
           <p className="hint">Gold dots are tournament titles. The dashed line marks 50%.</p>
         </div>
-        <Sparkline rows={o.rows} countTies={countTies} />
+        <Sparkline rows={o.rows.filter((r) => !r.current)} countTies={countTies} />
       </section>
       <section aria-labelledby="by-season-h">
         <div className="section-head"><h2 id="by-season-h">Season by season</h2></div>
@@ -467,7 +577,7 @@ function OwnerPage({ slug, owners, countTies }) {
           rowKey={(r) => r.start}
           rows={rows}
           columns={[
-            { key: "start", label: "Season", render: (r) => <a href={"#season-" + r.start}>{r.season}</a> },
+            { key: "start", label: "Season", render: (r) => <><a href={"#season-" + r.start}>{r.season}</a>{r.current && <span className="dim"> in progress</span>}</> },
             { key: "team", label: "Team" },
             { key: "w", label: "Record", num: true, render: record },
             { key: "pct", label: "Win %", num: true, render: (r) => L.fmtPct(r.pct) },
@@ -951,16 +1061,20 @@ function TeamsPage({ countTies, ver }) {
 // ---------- Draft ----------
 function DraftPage() {
   const years = [...new Set(L.DRAFT.map((d) => d.start))].sort((a, b) => b - a);
-  // Opens on the latest draft; searching a player looks across every year.
+  // Opens on the latest draft; searching a player, an owner or a pick number looks across every year.
   const [year, setYear] = useState(null);
   const [owner, setOwner] = useState("");
+  const [pick, setPick] = useState("");
   const [query, setQuery] = useState("");
   const [sort, onSort] = useSort("start");
+  const maxPick = Math.max(0, ...L.DRAFT.map((d) => d.pick));
   const owners = [...new Set(L.DRAFT.map((d) => d.owner))].sort((a, b) => a.localeCompare(b));
-  const q = query.trim().toLowerCase();
-  const shown = year ?? (q || owner ? "" : String(years[0] ?? ""));
+  // Accents are ignored, so "jokic" finds Jokić.
+  const fold = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const q = fold(query.trim());
+  const shown = year ?? (q || owner || pick ? "" : String(years[0] ?? ""));
   const rows = sortRows(
-    L.DRAFT.filter((d) => (!shown || d.start === +shown) && (!owner || d.owner === owner) && (!q || d.player.toLowerCase().includes(q))),
+    L.DRAFT.filter((d) => (!shown || d.start === +shown) && (!owner || d.owner === owner) && (!pick || d.pick === +pick) && (!q || fold(d.player).includes(q))),
     sort
   );
   return (
@@ -969,6 +1083,9 @@ function DraftPage() {
         <h1>Draft history</h1>
         <p className="lede">Every pick of every draft since {L.SEASON_LIST.find((s) => s.start === years[years.length - 1])?.label}, from Yahoo.</p>
       </header>
+      <DraftSlots />
+      <section aria-labelledby="picks-h">
+      <div className="section-head"><h2 id="picks-h">Every pick</h2></div>
       <div className="controls">
         <Field id="draft-search" label="Search player">
           <input id="draft-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Try Luka" />
@@ -979,6 +1096,12 @@ function DraftPage() {
             {years.map((y) => <option key={y} value={y}>{L.SEASON_LIST.find((s) => s.start === y)?.label ?? y}</option>)}
           </select>
         </Field>
+        <Field id="draft-pick" label="Pick">
+          <select id="draft-pick" value={pick} onChange={(e) => setPick(e.target.value)}>
+            <option value="">All picks</option>
+            {Array.from({ length: maxPick }, (_, i) => i + 1).map((n) => <option key={n} value={n}>#{n}</option>)}
+          </select>
+        </Field>
         <Field id="draft-owner" label="Owner">
           <select id="draft-owner" value={owner} onChange={(e) => setOwner(e.target.value)}>
             <option value="">All owners</option>
@@ -986,6 +1109,7 @@ function DraftPage() {
           </select>
         </Field>
       </div>
+      <PlayerFacts rows={rows} query={q} />
       <DataTable
         caption="Draft picks"
         sort={sort}
@@ -996,12 +1120,71 @@ function DraftPage() {
           { key: "start", label: "Season", render: (r) => <a href={"#season-" + r.start}>{r.season}</a> },
           { key: "round", label: "Round", num: true },
           { key: "pick", label: "Pick", num: true },
-          { key: "player", label: "Player" },
+          { key: "player", label: "Player", render: (r) => <button type="button" className="linkish" onClick={() => setQuery(r.player)} title={`Every time ${r.player} was drafted`}>{r.player}</button> },
           { key: "team", label: "Team" },
           { key: "owner", label: "Owner", render: (r) => <OwnerLink name={r.owner} /> },
         ]}
       />
+      </section>
     </>
+  );
+}
+
+// "Did you know" cards when a player search narrows to one to three players.
+function PlayerFacts({ rows, query }) {
+  if (!query) return null;
+  const players = [...new Set(rows.map((r) => r.player))];
+  if (!players.length || players.length > 3) return null;
+  const list = (names) => names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+  return (
+    <div className="facts">
+      {players.map((name) => {
+        const f = L.playerFacts(name);
+        const e = f.earliest;
+        return (
+          <aside key={name} className="fact" aria-label={`Did you know: ${name}`}>
+            <p className="fact-kicker">Did you know?</p>
+            <p className="fact-main">
+              <strong>{name}</strong> has been drafted {f.times === 1 ? "once" : `${f.times} times`}
+              {f.times > 1 && <> by {f.owners === 1 ? "the same owner" : `${f.owners} different owners`}</>}.
+              {f.times > 1 && f.most > 1 && <> {list(f.topOwners)} drafted {name} the most ({f.most} times).</>}
+            </p>
+            <p className="fact-sub">
+              Earliest: {e.pick === 1 ? "#1 overall" : `pick ${e.pick}`}{e.times > 1 ? `, ${e.times} times, first` : ","} by {e.owner} in {e.season}. {f.times > 1 && <>Average pick {f.avgPick.toFixed(1)}, from {f.first} to {f.last}.</>}
+            </p>
+          </aside>
+        );
+      })}
+    </div>
+  );
+}
+
+// Average draft slot: the owner's round 1 pick, for owners with 10 or more drafts.
+function DraftSlots() {
+  const [sort, onSort] = useSort("avg", "asc");
+  const rows = sortRows(L.draftSlots(10), sort);
+  return (
+    <section aria-labelledby="slots-h">
+      <div className="section-head">
+        <h2 id="slots-h">Average draft position</h2>
+        <p className="hint">Each owner's first-round pick, for owners with 10 or more drafts. Lower is earlier.</p>
+      </div>
+      <DataTable
+        caption="Average draft position by owner"
+        sort={sort}
+        onSort={onSort}
+        rowKey={(r) => r.owner}
+        rows={rows}
+        columns={[
+          { key: "owner", label: "Owner", render: (r) => <OwnerLink name={r.owner} /> },
+          { key: "drafts", label: "Drafts", num: true },
+          { key: "avg", label: "Avg pick", num: true, render: (r) => r.avg.toFixed(1) },
+          { key: "firsts", label: "#1 picks", num: true, render: (r) => r.firsts || <span className="dim">-</span> },
+          { key: "best", label: "Earliest", num: true },
+          { key: "worst", label: "Latest", num: true },
+        ]}
+      />
+    </section>
   );
 }
 
@@ -1023,6 +1206,10 @@ export default function App() {
   }, []);
   const [route, param] = parseRoute(hash);
   useEffect(() => { window.scrollTo(0, 0); }, [hash]);
+  // On phones the menu is a swipeable row; keep the current page's link in view.
+  useEffect(() => {
+    document.querySelector('.nav a[aria-current="page"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [hash]);
   const active = route === "owner" ? "owners" : route;
 
   let page;
@@ -1037,7 +1224,7 @@ export default function App() {
   return (
     <div className="shell">
       <div className="masthead">
-        <a className="brand" href="#"><Pine />Laker Fantasy Bball</a>
+        <a className="brand" href="#"><Pine />Laker Fantasy NBA</a>
         <nav aria-label="Main" className="nav">
           {NAV.map(([id, label]) => (
             <a key={id || "home"} href={"#" + id} aria-current={active === id || (id === "" && !NAV.some(([n]) => n === active) ) ? "page" : undefined}>
@@ -1052,16 +1239,21 @@ export default function App() {
           options={[[false, "Ties left out"], [true, "Ties count"]]}
         />
       </div>
-      <p className="notice">
-        Results come from Yahoo Fantasy from 2005-06 on (the current season updates nightly). 2004-05 comes from the commissioner's spreadsheet.
-      </p>
       {H.IS_SAMPLE && (
         <p className="notice notice-sample">
           Head-to-head numbers on this preview are made up so the pages can be tried out. Real matchups load from Yahoo.
         </p>
       )}
+      <PageHelp page={HELP[route] ? route : "home"} />
       <main>{page}</main>
       <footer className="foot">
+        {/* Yahoo's required attribution (developer.yahoo.com/attribution): official logo, unaltered, linked to yahoo.com. */}
+        <a className="yahoo-attr" href="https://www.yahoo.com/?ilc=401" target="_blank" rel="noopener">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_white.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_white_retina.png 2x" />
+            <img src="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_purple_retina.png 2x" width="134" height="20" alt="Powered by Yahoo" />
+          </picture>
+        </a>
         <p>Fantasy data provided by Yahoo Fantasy</p>
         <p>An independent league site. Colors and pines nod to University Lake School, home of the Lakers, and it is not affiliated with the school.</p>
       </footer>

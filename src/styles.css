@@ -1,4 +1,4 @@
-/* Laker Fantasy Bball
+/* Laker Fantasy NBA
    Colors take their cue from University Lake School (green and white, Lakers, pines on Nagawicka Lake).
    Layout: one column, content-first. The memorable moment is the row of championship banners
    hung from a beam; everything else stays quiet tables and ledgers. */
@@ -98,7 +98,7 @@ a:hover { text-decoration-thickness: 2px; }
 .notice { margin: 14px 0 0; padding: 8px 12px; border-left: 4px solid var(--gold); background: var(--surface-2); font-size: 13px; color: var(--ink-2); }
 
 /* page structure */
-main { display: flex; flex-direction: column; gap: 44px; padding-top: 28px; }
+main { display: flex; flex-direction: column; gap: 36px; padding-top: 24px; }
 .page-head { display: flex; flex-direction: column; gap: 6px; }
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 7vw, 64px); line-height: 0.95; }
@@ -112,7 +112,7 @@ h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
 @media (max-width: 860px) { .grid-3 { grid-template-columns: minmax(0, 1fr); } .grid-2 { grid-template-columns: minmax(0, 1fr); } }
 
 /* banners hung from a beam */
-.rafters { position: relative; overflow-x: auto; padding: 22px 4px 6px; border-top: 8px solid var(--ink-2); border-radius: 2px; scrollbar-width: thin; }
+.rafters { position: relative; overflow-x: auto; padding: 16px 4px 4px; border-top: 8px solid var(--ink-2); border-radius: 2px; scrollbar-width: thin; }
 .banner-row { display: flex; gap: 12px; margin: 0; padding: 0 0 14px; list-style: none; width: max-content; }
 .banner { flex: none; }
 .banner a {
@@ -196,14 +196,28 @@ input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220p
 .banner-sweep .banner-crest { color: var(--medal-ink); }
 .brand .pine { width: 22px; height: 26px; }
 .shoreline { display: block; width: 100%; height: 96px; margin-top: 18px; }
+/* home: title and shoreline share one row, so the banners start near the top */
+.page-head-home { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 8px 28px; }
+.page-head-home h1 { font-size: clamp(36px, 5vw, 52px); }
+.page-head-home .shoreline { flex: 1 1 260px; width: auto; min-width: 0; height: 64px; margin: 0; }
 .shoreline .far { fill: var(--pine-far); }
 .shoreline .near { fill: var(--pine); }
 .shoreline .wave { fill: none; stroke: var(--lake); stroke-width: 2; }
 .foot { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
 .foot p { margin: 0; font-size: 13px; color: var(--ink-2); }
+.yahoo-attr { align-self: flex-start; line-height: 0; margin-bottom: 4px; }
 
 /* phones: tighter vertical rhythm, stats in two even columns, record on its own row */
 @media (max-width: 640px) {
+  /* masthead: name and ties toggle share the first row, the menu is one swipeable row under them */
+  .masthead { gap: 10px 8px; padding-bottom: 8px; }
+  .brand { font-size: 22px; gap: 6px; }
+  .brand svg { width: 16px; height: 16px; }
+  .seg { order: 2; }
+  .seg button { font-size: 12px; padding: 5px 8px; }
+  .nav { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { flex: none; padding: 5px 9px; font-size: 15px; }
   main { gap: 32px; padding-top: 20px; }
   .section-head { margin-bottom: 10px; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
@@ -240,3 +254,21 @@ select.narrow { min-width: 150px; }
 .res-T { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
 .res-run { display: inline-flex; gap: 3px; }
 .res-run .res { width: 16px; height: 16px; font-size: 10px; border-radius: 3px; }
+
+/* draft: "Did you know" cards and player names that filter the table */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 4px 0 18px; }
+.fact { padding: 12px 14px; border-left: 4px solid var(--gold); background: var(--surface-2); border-radius: 0 8px 8px 0; }
+.fact p { margin: 0; }
+.fact-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.fact-main { margin-top: 4px !important; font-size: 15px; }
+.fact-sub { margin-top: 4px !important; font-size: 13px; color: var(--ink-2); }
+.linkish { font: inherit; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.linkish:hover { color: var(--accent); text-decoration-style: solid; }
+
+/* "What can I do here?": a link at the top right of the page that opens a pop-up over the content */
+.help { position: relative; height: 0; z-index: 20; }
+.help summary { position: absolute; right: 0; top: 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; list-style: none; white-space: nowrap; }
+.help summary::-webkit-details-marker { display: none; }
+.help summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 12px; font-weight: 800; }
+.help ul { position: absolute; right: 0; top: 38px; width: min(420px, calc(100vw - 32px)); margin: 0; padding: 14px 18px 14px 34px; font-size: 14px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
+.help li + li { margin-top: 6px; }

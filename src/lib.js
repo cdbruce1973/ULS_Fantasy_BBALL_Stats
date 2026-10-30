@@ -26,6 +26,7 @@ export let CURRENT = null;
 export let TEAM_SEASONS = [];
 export let OWNER_NAMES = [];
 export let DRAFT = [];
+export let LAST_FINISHED = null; // label of the newest completed season
 // Finished seasons only: a season in progress would top the best-season lists on a few weeks of games.
 let FINISHED = [];
 function setData(seasons, draft) {
@@ -36,6 +37,7 @@ function setData(seasons, draft) {
     s.teams.map((t) => ({ ...t, season: s.label, start: s.start, end: s.end, current: !!s.current }))
   );
   FINISHED = TEAM_SEASONS.filter((t) => !t.current);
+  LAST_FINISHED = [...sorted].reverse().find((s) => !s.current)?.label ?? null;
   OWNER_NAMES = [...new Set(TEAM_SEASONS.map((t) => t.owner))].sort((a, b) => a.localeCompare(b));
   const label = new Map(sorted.map((s) => [s.start, s.label]));
   DRAFT = draft.map((d) => ({ ...d, season: label.get(d.start) }));
@@ -60,20 +62,22 @@ export function buildOwners(countTies) {
     if (!map.has(t.owner)) map.set(t.owner, []);
     map.get(t.owner).push(t);
   }
+  // Every career number counts completed seasons only (Craig, 2026-10-30), so all-time stats change once a
+  // year. rows still holds the season in progress for the owner's season-by-season table.
   return [...map.entries()].map(([name, rows]) => {
-    const w = sum(rows, "w"), l = sum(rows, "l"), t = sum(rows, "t");
-    const count = (key, n) => rows.filter((r) => r[key] === n).length;
-    const placed = (key) => rows.filter((r) => r[key] && r[key] <= 3).length;
+    const done = rows.filter((r) => !r.current);
+    const w = sum(done, "w"), l = sum(done, "l"), t = sum(done, "t");
+    const count = (key, n) => done.filter((r) => r[key] === n).length;
+    const placed = (key) => done.filter((r) => r[key] && r[key] <= 3).length;
     return {
       name,
       slug: slug(name),
       rows,
-      seasons: rows.length,
+      seasons: done.length,
       w, l, t,
       pct: winPct(w, l, t, countTies),
-      // Averages leave out a season in progress.
-      avgW: avg(rows, "w"),
-      avgL: avg(rows, "l"),
+      avgW: done.length ? w / done.length : 0,
+      avgL: done.length ? l / done.length : 0,
       titles: count("tourney", 1),
       runnerUps: count("tourney", 2),
       thirds: count("tourney", 3),
@@ -83,15 +87,35 @@ export function buildOwners(countTies) {
       placedTourney: placed("tourney"),
       placedReg: placed("reg"),
       first: rows[0].season,
-      last: rows[rows.length - 1].season,
+      last: (done[done.length - 1] ?? rows[0]).season,
+      inProgress: rows.find((r) => r.current)?.season ?? null,
     };
   });
 }
 const sum = (rows, k) => rows.reduce((a, r) => a + r[k], 0);
-const avg = (rows, k) => {
-  const done = rows.filter((r) => !r.current);
-  return done.length ? sum(done, k) / done.length : 0;
-};
+
+// Draft slot by owner: where each owner picked in round 1 (a snake draft keeps that slot all draft).
+export function draftSlots(minDrafts = 10) {
+  const map = new Map();
+  for (const d of DRAFT) {
+    if (d.round !== 1) continue;
+    if (!map.has(d.owner)) map.set(d.owner, []);
+    map.get(d.owner).push(d);
+  }
+  return [...map.entries()]
+    .map(([owner, picks]) => {
+      const slots = picks.map((p) => p.pick);
+      return {
+        owner,
+        drafts: picks.length,
+        avg: slots.reduce((a, n) => a + n, 0) / picks.length,
+        firsts: slots.filter((n) => n === 1).length,
+        best: Math.min(...slots),
+        worst: Math.max(...slots),
+      };
+    })
+    .filter((r) => r.drafts >= minDrafts);
+}
 
 // ---------- banners ----------
 export function buildBanners() {
@@ -149,4 +173,28 @@ export function repeatChamps(key) {
     if (a && b && a.owner === b.owner) out.push({ owner: a.owner, span: `${sorted[i - 1].label} and ${sorted[i].label}` });
   }
   return out;
+}
+
+// "Did you know" facts for one player across every draft.
+export function playerFacts(player) {
+  const picks = DRAFT.filter((d) => d.player === player);
+  if (!picks.length) return null;
+  const by = new Map();
+  for (const d of picks) by.set(d.owner, (by.get(d.owner) || 0) + 1);
+  const most = Math.max(...by.values());
+  const best = Math.min(...picks.map((d) => d.pick));
+  const atBest = picks.filter((d) => d.pick === best).sort((a, b) => a.start - b.start);
+  const earliest = { ...atBest[0], times: atBest.length };
+  const starts = picks.map((d) => d.start);
+  return {
+    player,
+    times: picks.length,
+    owners: by.size,
+    most,
+    topOwners: [...by].filter(([, n]) => n === most).map(([o]) => o).sort((a, b) => a.localeCompare(b)),
+    earliest,
+    avgPick: picks.reduce((a, d) => a + d.pick, 0) / picks.length,
+    first: picks.find((d) => d.start === Math.min(...starts)).season,
+    last: picks.find((d) => d.start === Math.max(...starts)).season,
+  };
 }

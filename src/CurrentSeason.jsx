@@ -143,7 +143,7 @@ export default function CurrentSeason({ tab }) {
       {core && current === "week" && <ThisWeek core={core} />}
       {core && current === "schedule" && <Schedule core={core} />}
       {core && current === "trends" && <Trends core={core} />}
-      {core && <HowItWorks />}
+      {core && <HowItWorks tab={current} />}
     </>
   );
 }
@@ -210,7 +210,7 @@ function BestOf({ night }) {
     <section aria-labelledby="best-h">
       <div className="section-head">
         <h2 id="best-h">Best of the night</h2>
-        <p className="hint">Tap <span className="info-btn info-demo" aria-hidden="true">i</span> for what a number means. The full story is at the bottom of the page.</p>
+        <p className="hint">Tap <span className="info-btn info-demo" aria-hidden="true">i</span> for what a number means. The full story is in How the numbers work at the bottom of the page.</p>
       </div>
       <div className="grid-3 best-grid">
         <div>
@@ -278,15 +278,19 @@ function BestOf({ night }) {
   );
 }
 
-// The long explanations, at the bottom of every tab. The (i) pop-ups give the short version in place.
-function HowItWorks() {
+// The long explanations, at the bottom of the tabs that use them, closed until opened. The (i) pop-ups give the short version in place.
+// Which explanations each tab needs: value on Last night and Trends, night score on Last night, records on Schedule.
+const HOW_PARTS = { "": ["value", "uses", "night"], trends: ["value", "uses"], schedule: ["records"] };
+
+function HowItWorks({ tab }) {
+  const parts = HOW_PARTS[tab] || [];
+  if (!parts.length) return null;
+  const show = (k) => parts.includes(k);
   return (
-    <section aria-labelledby="how-h" className="how">
-      <div className="section-head">
-        <h2 id="how-h">How the numbers work</h2>
-      </div>
+    <details className="how">
+      <summary><h2>How the numbers work</h2></summary>
       <div className="how-grid">
-        <div>
+        {show("value") && <div>
           <h3>Player value</h3>
           <p>
             One score for how much a player helped across all 11 categories. Each category is scored on its own: how far the
@@ -299,8 +303,8 @@ function HowItWorks() {
             0 is an average game, about +3 is good, +6 or more is a big night, and below 0 means he cost you across the board.
             Because every category counts the same, a center with 14 rebounds and 4 blocks can match a guard with 30 points.
           </p>
-        </div>
-        <div>
+        </div>}
+        {show("uses") && <div>
           <h3>What value tells you</h3>
           <p>
             <strong>Last night:</strong> who really won your night across the categories, not just who scored most. Left on the bench
@@ -315,21 +319,23 @@ function HowItWorks() {
             It weighs all 11 categories equally, so it doesn't know if you're punting one (a poor free-throw shooter is worth more to a
             team punting FT%). Over 2 or 3 games it swings a lot.
           </p>
-        </div>
-        <div>
+        </div>}
+        {show("night") && <div>
           <h3>Night score</h3>
           <p>
             Rotisserie scoring for one night. In each of the 11 categories the 12 teams are ranked on their starters' totals: best gets 12
             points, worst 1, ties split. Adding the 11 categories gives a score from 11 to 132. The highest is Owner of the night.
           </p>
+        </div>}
+        {show("records") && <div>
           <h3>Records</h3>
           <p>
             Yahoo's record counts categories, so a 7-4 week adds 7 wins and 4 losses, and it includes the week in progress. The Matchups
             column counts whole weeks won, lost and tied, from finished weeks.
           </p>
-        </div>
+        </div>}
       </div>
-    </section>
+    </details>
   );
 }
 

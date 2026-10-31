@@ -41,7 +41,7 @@ const HELP = {
     "Championship banners: every tournament champion, newest first. Gold banners won the regular season too. Hover to pause them, or tap one to open that season.",
     "Podium finishes: who has the most 1st, 2nd and 3rd place finishes, in the tournament and the regular season, and how often they make the top three.",
     "Career leaders, best single seasons, and streaks of back-to-back top-three finishes.",
-    "Use the Ties toggle at the top to figure win % with or without ties.",
+    "Use the Ties toggle under this link to figure win % with or without ties.",
   ],
   now: [
     "The season in progress, updated from Yahoo every morning.",
@@ -1485,11 +1485,19 @@ export default function App() {
   }, []);
   const [route, param] = parseRoute(hash);
   useEffect(() => { window.scrollTo(0, 0); }, [hash]);
-  // On phones the menu is a swipeable row; keep the current page's link in view.
-  useEffect(() => {
-    document.querySelector('.nav a[aria-current="page"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [hash]);
   const active = route === "owner" ? "owners" : route;
+  // Phones: the menu is a drop-down list that closes when a page is picked.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [hash]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const away = (e) => { if (!e.target.closest?.(".masthead")) setMenuOpen(false); };
+    const esc = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
+  }, [menuOpen]);
+  const currentLabel = (NAV.find(([id]) => id === active) || NAV[0])[1];
 
   let page;
   if (route === "owner") page = <OwnerPage slug={param} owners={owners} countTies={countTies} />;
@@ -1506,26 +1514,35 @@ export default function App() {
     <div className="shell">
       <div className="masthead">
         <a className="brand" href="#"><Pine />Laker Fantasy NBA</a>
-        <nav aria-label="Main" className="nav">
+        <button type="button" className="menu-btn" aria-expanded={menuOpen} aria-controls="main-nav" onClick={() => setMenuOpen((o) => !o)}>
+          <span className="menu-icon" aria-hidden="true" />
+          {currentLabel}
+        </button>
+        <nav aria-label="Main" id="main-nav" className={"nav" + (menuOpen ? " open" : "")}>
           {NAV.map(([id, label]) => (
             <a key={id || "home"} href={"#" + id} aria-current={active === id || (id === "" && !NAV.some(([n]) => n === active) ) ? "page" : undefined}>
               {label}
             </a>
           ))}
         </nav>
-        <Segmented
-          label="How win percentage is figured"
-          value={countTies}
-          onChange={setCountTies}
-          options={[[false, "Ties left out"], [true, "Ties count"]]}
-        />
+      </div>
+      <div className="subbar">
+        <PageHelp page={HELP[route] ? route : "home"} />
+        {/* The ties choice only changes win % on the history pages. */}
+        {!["now", "draft", "odds"].includes(route) && (
+          <Segmented
+            label="How win percentage is figured"
+            value={countTies}
+            onChange={setCountTies}
+            options={[[false, "Ties left out"], [true, "Ties count"]]}
+          />
+        )}
       </div>
       {H.IS_SAMPLE && (
         <p className="notice notice-sample">
           Head-to-head numbers on this preview are made up so the pages can be tried out. Real matchups load from Yahoo.
         </p>
       )}
-      <PageHelp page={HELP[route] ? route : "home"} />
       <main>{page}</main>
       <footer className="foot">
         <div className="foot-top">
@@ -1540,7 +1557,7 @@ export default function App() {
             <p>Fantasy data provided by Yahoo Fantasy</p>
           </div>
           <div className="foot-right">
-            <p className="credits">Site managed by Craig Bruce <span aria-hidden="true">·</span> Built by Claude</p>
+            <p className="credits">Site managed by Craig <span aria-hidden="true">·</span> Built by Claude</p>
             <Feedback />
           </div>
         </div>

@@ -92,19 +92,20 @@ a:hover { text-decoration-thickness: 2px; }
 .nav a { padding: 6px 10px; border-radius: 6px; color: var(--ink-2); text-decoration: none; font-weight: 600; }
 .nav a:hover { color: var(--ink); background: var(--surface-2); }
 .nav a[aria-current="page"] { color: var(--on-accent); background: var(--accent); }
+.menu-btn { display: none; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
 .seg button { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 .notice { margin: 14px 0 0; padding: 8px 12px; border-left: 4px solid var(--gold); background: var(--surface-2); font-size: 13px; color: var(--ink-2); }
 
 /* page structure */
-main { display: flex; flex-direction: column; gap: 36px; padding-top: 24px; }
+main { display: flex; flex-direction: column; gap: 36px; padding-top: 6px; }
 .page-head { display: flex; flex-direction: column; gap: 6px; }
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 7vw, 64px); line-height: 0.95; }
 h2 { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 1; }
 h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
-.lede { margin: 0; max-width: 62ch; color: var(--ink-2); font-size: 16px; }
+.lede { margin: 0; color: var(--ink-2); font-size: 16px; }
 .section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-bottom: 14px; }
 .crumb { margin: 0; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
@@ -230,16 +231,24 @@ input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220p
 
 /* phones: tighter vertical rhythm, stats in two even columns, record on its own row */
 @media (max-width: 640px) {
-  /* masthead: name and ties toggle share the first row, the menu is one swipeable row under them */
-  .masthead { gap: 10px 8px; padding-bottom: 8px; }
+  /* masthead: name and a Menu button on one row; the menu drops down as a vertical list */
+  .masthead { gap: 10px 8px; padding-bottom: 8px; position: relative; }
   .brand { font-size: 22px; gap: 6px; }
   .brand svg { width: 16px; height: 16px; }
-  .seg { order: 2; }
   .seg button { font-size: 12px; padding: 5px 8px; }
-  .nav { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav a { flex: none; padding: 5px 9px; font-size: 15px; }
-  main { gap: 32px; padding-top: 20px; }
+  .menu-btn { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 14px; font-weight: 700; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+  .menu-icon, .menu-icon::before, .menu-icon::after { display: block; width: 16px; height: 2px; border-radius: 1px; background: currentColor; }
+  .menu-icon { position: relative; }
+  .menu-icon::before, .menu-icon::after { content: ""; position: absolute; left: 0; }
+  .menu-icon::before { top: -5px; }
+  .menu-icon::after { top: 5px; }
+  .menu-btn[aria-expanded="true"] .menu-icon { background: transparent; }
+  .menu-btn[aria-expanded="true"] .menu-icon::before { top: 0; transform: rotate(45deg); }
+  .menu-btn[aria-expanded="true"] .menu-icon::after { top: 0; transform: rotate(-45deg); }
+  .nav { display: none; }
+  .nav.open { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 2px; position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 220px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
+  .nav a { padding: 10px 12px; font-size: 16px; }
+  main { gap: 32px; padding-top: 4px; }
   .section-head { margin-bottom: 10px; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
   .stat { padding: 12px 0; }
@@ -255,7 +264,7 @@ input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220p
 :root[data-theme="dark"] { --loss: #e8906d; }
 select.narrow { min-width: 150px; }
 .notice-sample { margin-top: 8px; border-left-color: var(--loss); }
-.empty-note { margin: 0; max-width: 62ch; padding: 16px; border: 1px dashed var(--line); border-radius: 8px; color: var(--ink-2); }
+.empty-note { margin: 0; padding: 16px; border: 1px dashed var(--line); border-radius: 8px; color: var(--ink-2); }
 .grid-wrap { max-height: 78vh; }
 .h2h-grid th, .h2h-grid td { padding: 7px 9px; font-size: 13px; }
 .h2h-grid tbody th { position: sticky; left: 0; z-index: 1; background: var(--surface); font-weight: 700; border-bottom: 1px solid var(--line); text-align: left; }
@@ -287,11 +296,14 @@ select.narrow { min-width: 150px; }
 .linkish:hover { color: var(--accent); text-decoration-style: solid; }
 
 /* "What can I do here?": a link at the top right of the page that opens a pop-up over the content */
-.help { position: relative; height: 0; z-index: 20; }
-.help summary { position: absolute; right: 0; top: 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; list-style: none; white-space: nowrap; }
+/* under the header line, on the right: page help, then the ties toggle */
+.subbar { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 10px; }
+.subbar:empty { display: none; }
+.help { position: relative; z-index: 20; }
+.help summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; list-style: none; white-space: nowrap; }
 .help summary::-webkit-details-marker { display: none; }
 .help summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 12px; font-weight: 800; }
-.help ul { position: absolute; right: 0; top: 38px; width: min(420px, calc(100vw - 32px)); margin: 0; padding: 14px 18px 14px 34px; font-size: 14px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
+.help ul { position: absolute; right: 0; top: 28px; width: min(420px, calc(100vw - 32px)); margin: 0; padding: 14px 18px 14px 34px; font-size: 14px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
 .help li + li { margin-top: 6px; }
 
 /* Draft position vs finish, and the per-season record book */
@@ -320,7 +332,7 @@ select.narrow { min-width: 150px; }
 .odds-trend polyline { stroke: var(--accent); stroke-width: 1.5; }
 .odds-trend circle { fill: var(--accent); }
 .odds-trend-mid { stroke: var(--line); stroke-dasharray: 3 3; }
-.odds-how { margin-top: 18px; max-width: 70ch; color: var(--ink-2); font-size: 14px; }
+.odds-how { margin-top: 18px; color: var(--ink-2); font-size: 14px; }
 .odds-how summary { cursor: pointer; font-weight: 700; color: var(--ink); }
 .odds-how p { margin: 8px 0 0; }
 /* ---------- This season (src/CurrentSeason.jsx) ---------- */
@@ -391,6 +403,11 @@ select.narrow { min-width: 150px; }
 .info-demo { display: inline-grid; vertical-align: -3px; cursor: default; }
 .info-pop { position: fixed; z-index: 50; padding: 10px 12px; border-radius: 8px; background: var(--ink); color: var(--bg); font: 400 13px/1.45 var(--font-body); text-align: left; white-space: normal; text-transform: none; letter-spacing: 0; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
 .how { margin-top: 40px; padding-top: 18px; border-top: 2px solid var(--ink); }
+.how > summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+.how > summary::-webkit-details-marker { display: none; }
+.how > summary::before { content: "+"; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent); color: var(--accent); font-weight: 800; font-size: 18px; line-height: 1; }
+.how[open] > summary::before { content: "\2212"; }
+.how[open] > summary { margin-bottom: 16px; }
 .how-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; font-size: 14px; }
 .how-grid h3 { margin: 0 0 6px; font-size: 16px; }
 .how-grid p { margin: 0 0 10px; }

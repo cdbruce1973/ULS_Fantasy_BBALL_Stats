@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as L from "./lib.js";
 import * as H from "./h2h.js";
+import CurrentSeason from "./CurrentSeason.jsx";
 
 const NAV = [
   ["", "Record book"],
+  ["now", "This season"],
   ["owners", "Owners"],
   ["seasons", "Seasons"],
   ["h2h", "Head-to-head"],
@@ -25,6 +27,7 @@ function parseRoute(hash) {
   if (hash.startsWith("owner-")) return ["owner", hash.slice(6)];
   if (hash.startsWith("season-")) return ["seasons", parseInt(hash.slice(7), 10)];
   if (hash.startsWith("h2h-")) return ["h2h", hash.slice(4)];
+  if (hash.startsWith("now-")) return ["now", hash.slice(4)];
   return [hash, null];
 }
 
@@ -37,6 +40,14 @@ const HELP = {
     "Podium finishes: who has the most 1st, 2nd and 3rd place finishes, in the tournament and the regular season, and how often they make the top three.",
     "Career leaders, best single seasons, and streaks of back-to-back top-three finishes.",
     "Use the Ties toggle at the top to figure win % with or without ties.",
+  ],
+  now: [
+    "The season in progress, updated from Yahoo every morning.",
+    "Last night: every team's box score (starters count, bench games are shown dimmed), plus the Best of the night: owner of the night, top players, the best games left on a bench, and the top 5 in each category. Use the arrows to step back through earlier nights.",
+    "This week: every matchup category by category, with the leader in each highlighted.",
+    "Schedule: standings, results so far and every matchup still to come. Pick your team to see just your weeks.",
+    "Trends: who is heating up or cooling off over the last 7 or 30 days against their season average, overall or in one category. Switch to Teams for each team's weekly category totals. Click a player for their game log.",
+    "Pick your team once and the page remembers it in this browser.",
   ],
   owners: [
     "Career totals for every owner: seasons, record, win %, wins per season and podium finishes.",
@@ -1219,6 +1230,7 @@ export default function App() {
   else if (route === "h2h") page = <H2HPage param={param} countTies={countTies} filter={h2hFilter} setFilter={setH2hFilter} liveGames={liveGames} />;
   else if (route === "teams") page = <TeamsPage countTies={countTies} ver={ver} />;
   else if (route === "draft") page = <DraftPage />;
+  else if (route === "now") page = <CurrentSeason tab={param} />;
   else page = <RecordBook owners={owners} countTies={countTies} />;
 
   return (

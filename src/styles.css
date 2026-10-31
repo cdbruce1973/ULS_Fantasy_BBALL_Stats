@@ -323,3 +323,75 @@ select.narrow { min-width: 150px; }
 .odds-how { margin-top: 18px; max-width: 70ch; color: var(--ink-2); font-size: 14px; }
 .odds-how summary { cursor: pointer; font-weight: 700; color: var(--ink); }
 .odds-how p { margin: 8px 0 0; }
+/* ---------- This season (src/CurrentSeason.jsx) ---------- */
+.now-controls { margin-top: 6px; }
+.now-loading { margin-top: 18px; }
+.now-date { margin: 22px 0 0; font-size: 22px; }
+.day-nav { display: inline-flex; align-items: stretch; gap: 4px; }
+.day-nav button { font: inherit; font-size: 18px; font-weight: 700; width: 38px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.day-nav button:disabled { opacity: 0.4; cursor: default; }
+.day-nav input { font: inherit; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.best-grid h3, .cat-leaders-h { margin-top: 0; }
+.cat-leaders-h { margin: 28px 0 10px; }
+.cat-leaders { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.cat-card { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 12px; }
+.cat-card h4 { margin: 0 0 6px; font-size: 13px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
+.cat-card ol { margin: 0; padding-left: 18px; font-size: 13px; }
+.cat-card li { padding: 2px 0; }
+.cat-card li > span:first-child { overflow-wrap: anywhere; }
+.cat-card .num { float: right; font-weight: 700; font-variant-numeric: tabular-nums; margin-left: 8px; }
+.box-list { display: flex; flex-direction: column; gap: 12px; }
+.box { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.box > summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 10px 12px; cursor: pointer; }
+.box-owner { font-weight: 700; }
+.box-score { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 13px; }
+.box .tbl-wrap { border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+.box-idle { padding: 8px 12px; }
+.dt-tight th, .dt-tight td { padding: 6px 8px; font-size: 13px; }
+.dt tr.benched td { color: var(--ink-2); font-style: italic; }
+.dt tr.totals td { font-weight: 700; background: var(--surface-2); }
+.dt tr.mine td { background: var(--surface-2); font-weight: 600; }
+.match-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.match { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 12px; }
+.match-head { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; margin-bottom: 8px; }
+.match-side { display: flex; flex-direction: column; font-weight: 600; overflow-wrap: anywhere; }
+.match-side .dim { font-weight: 400; font-size: 12px; }
+.match-side.right { text-align: right; }
+.match-side.lead a { font-weight: 800; }
+.match-score { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
+.match-tag { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--ink-2); }
+.match-cats { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+.match-cats th { font-weight: 600; color: var(--ink-2); text-align: center; width: 64px; }
+.match-cats td { padding: 3px 6px; border-top: 1px solid var(--line); }
+.match-cats th { border-top: 1px solid var(--line); }
+.match-cats td.num { text-align: right; }
+.match-cats td.win { font-weight: 800; background: var(--surface-2); color: var(--accent); }
+.sched-weeks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.sched-week { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 12px; }
+.sched-week.now { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.sched-week h3 { margin: 0 0 6px; font-size: 15px; }
+.sched-week ul { margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.sched-week li { padding: 2px 0; }
+.trend-dir { margin-bottom: 10px; }
+.dt td.up { color: var(--accent); font-weight: 700; }
+.dt td.down { color: var(--loss); font-weight: 700; }
+.rank { font-size: 10px; color: var(--ink-2); vertical-align: super; }
+.linkish { font: inherit; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.dt tr.log-row td { background: var(--bg); white-space: normal; }
+.game-log { padding: 4px 0; }
+.game-log .hint { margin-bottom: 6px; }
+@media (max-width: 640px) {
+  .match-list, .sched-weeks { grid-template-columns: minmax(0, 1fr); }
+  .day-nav input { min-width: 0; }
+}
+.cell-sub { display: block; font-size: 12px; color: var(--ink-2); }
+.info { position: relative; display: inline-flex; vertical-align: middle; margin-left: 4px; }
+.info button.info-btn, .info-btn { display: inline-grid; place-items: center; width: 16px; height: 16px; padding: 0; border: 1px solid var(--ink-2); border-radius: 50%; background: var(--surface); color: var(--ink-2); font: italic 700 11px/1 Georgia, serif; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.info button.info-btn:hover, .info button.info-btn[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.info-demo { display: inline-grid; vertical-align: -3px; cursor: default; }
+.info-pop { position: fixed; z-index: 50; padding: 10px 12px; border-radius: 8px; background: var(--ink); color: var(--bg); font: 400 13px/1.45 var(--font-body); text-align: left; white-space: normal; text-transform: none; letter-spacing: 0; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+.how { margin-top: 40px; padding-top: 18px; border-top: 2px solid var(--ink); }
+.how-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; font-size: 14px; }
+.how-grid h3 { margin: 0 0 6px; font-size: 16px; }
+.how-grid p { margin: 0 0 10px; }
+@media (max-width: 860px) { .how-grid { grid-template-columns: minmax(0, 1fr); } }

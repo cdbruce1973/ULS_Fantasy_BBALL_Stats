@@ -206,6 +206,22 @@ input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220p
 .foot { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
 .foot p { margin: 0; font-size: 13px; color: var(--ink-2); }
 .yahoo-attr { align-self: flex-start; line-height: 0; margin-bottom: 4px; }
+.foot .credits { color: var(--ink); font-weight: 600; margin: 6px 0 2px; }
+.fb-open, .fb-send, .fb-cancel { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+.fb-open, .fb-cancel { align-self: flex-start; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); }
+.fb-open:hover, .fb-cancel:hover { color: var(--ink); border-color: var(--ink-2); }
+.fb-open { margin: 4px 0 6px; }
+.fb-send { border: 0; background: var(--accent); color: var(--on-accent); }
+.fb-send:disabled { opacity: 0.6; cursor: default; }
+.fb { display: flex; flex-direction: column; gap: 10px; max-width: 560px; margin: 6px 0 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.fb .field { display: flex; flex-direction: column; gap: 4px; }
+.fb-row .field { flex: 1 1 200px; }
+.fb-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.fb input, .fb textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box; }
+.fb textarea { resize: vertical; }
+.fb-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fb-err { font-size: 13px; color: var(--ink); }
+.foot .fb-done { color: var(--accent); font-weight: 600; margin: 4px 0 6px; }
 
 /* phones: tighter vertical rhythm, stats in two even columns, record on its own row */
 @media (max-width: 640px) {

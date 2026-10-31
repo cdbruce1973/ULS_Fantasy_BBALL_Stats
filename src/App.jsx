@@ -93,6 +93,53 @@ function PageHelp({ page }) {
   );
 }
 
+// ---------- feedback (Netlify Forms) ----------
+// Netlify finds the form from the hidden copy in index.html at deploy time and stores each submission.
+// Emails go to whatever address is set in Netlify (Forms > Form notifications), so no address lives in the code.
+function Feedback() {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+  const submit = async (e) => {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      const body = new URLSearchParams(new FormData(e.currentTarget)).toString();
+      const res = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+      if (!res.ok) throw new Error(res.status);
+      setStatus("sent");
+    } catch {
+      setStatus("error");
+    }
+  };
+  if (status === "sent") return <p className="fb-done" role="status">Thanks! Your note is on its way to Craig.</p>;
+  if (!open) return <button type="button" className="fb-open" onClick={() => setOpen(true)}>Send feedback</button>;
+  return (
+    <form className="fb" name="feedback" method="POST" data-netlify="true" netlify-honeypot="bot-field" onSubmit={submit}>
+      <input type="hidden" name="form-name" value="feedback" />
+      <p hidden><label>Leave this empty <input name="bot-field" tabIndex={-1} autoComplete="off" /></label></p>
+      <div className="fb-row">
+        <label className="field">
+          <span className="field-label">Your name (optional)</span>
+          <input type="text" name="name" autoComplete="name" maxLength={80} />
+        </label>
+        <label className="field">
+          <span className="field-label">Email, if you want a reply (optional)</span>
+          <input type="email" name="email" autoComplete="email" maxLength={120} />
+        </label>
+      </div>
+      <label className="field">
+        <span className="field-label">Idea, bug or wrong stat</span>
+        <textarea name="message" rows={4} required maxLength={2000} />
+      </label>
+      <div className="fb-actions">
+        <button type="submit" className="fb-send" disabled={status === "sending"}>{status === "sending" ? "Sending..." : "Send"}</button>
+        <button type="button" className="fb-cancel" onClick={() => { setOpen(false); setStatus("idle"); }}>Cancel</button>
+        {status === "error" && <span className="fb-err" role="alert">That didn't go through. Try again in a minute.</span>}
+      </div>
+    </form>
+  );
+}
+
 // ---------- artwork (original drawings: a pine and a shoreline) ----------
 function Pine({ className }) {
   return (
@@ -1255,6 +1302,8 @@ export default function App() {
           </picture>
         </a>
         <p>Fantasy data provided by Yahoo Fantasy</p>
+        <p className="credits">Site managed by Craig Bruce <span aria-hidden="true">·</span> Built by Claude</p>
+        <Feedback />
         <p>An independent league site. Colors and pines nod to University Lake School, home of the Lakers, and it is not affiliated with the school.</p>
       </footer>
     </div>

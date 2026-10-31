@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as L from "./lib.js";
 import * as H from "./h2h.js";
+import OddsPage from "./Odds.jsx";
+import CurrentSeason from "./CurrentSeason.jsx";
 
 const NAV = [
   ["", "Record book"],
+  ["now", "This season"],
   ["owners", "Owners"],
   ["seasons", "Seasons"],
   ["h2h", "Head-to-head"],
   ["teams", "Teams"],
   ["draft", "Draft"],
+  ["odds", "Playoff odds"],
 ];
 
 // ---------- routing (hash based, works on any static host) ----------
@@ -25,6 +29,7 @@ function parseRoute(hash) {
   if (hash.startsWith("owner-")) return ["owner", hash.slice(6)];
   if (hash.startsWith("season-")) return ["seasons", parseInt(hash.slice(7), 10)];
   if (hash.startsWith("h2h-")) return ["h2h", hash.slice(4)];
+  if (hash.startsWith("now-")) return ["now", hash.slice(4)];
   return [hash, null];
 }
 
@@ -36,7 +41,15 @@ const HELP = {
     "Championship banners: every tournament champion, newest first. Gold banners won the regular season too. Hover to pause them, or tap one to open that season.",
     "Podium finishes: who has the most 1st, 2nd and 3rd place finishes, in the tournament and the regular season, and how often they make the top three.",
     "Career leaders, best single seasons, and streaks of back-to-back top-three finishes.",
-    "Use the Ties toggle at the top to figure win % with or without ties.",
+    "Use the Ties toggle next to any win % to figure it with or without ties. The choice applies across the site.",
+  ],
+  now: [
+    "The season in progress, updated from Yahoo every morning.",
+    "Last night: every team's box score (starters count, bench games are shown dimmed), plus the Best of the night: owner of the night, top players, the best games left on a bench, and the top 5 in each category. Use the arrows to step back through earlier nights.",
+    "This week: every matchup category by category, with the leader in each highlighted.",
+    "Schedule: standings, results so far and every matchup still to come. Pick your team to see just your weeks.",
+    "Trends: who is heating up or cooling off over the last 7 or 30 days against their season average, overall or in one category. Switch to Teams for each team's weekly category totals. Click a player for their game log.",
+    "Pick your team once and the page remembers it in this browser.",
   ],
   owners: [
     "Career totals for every owner: seasons, record, win %, wins per season and podium finishes.",
@@ -50,7 +63,8 @@ const HELP = {
   ],
   seasons: [
     "Pick a season to see the tournament and regular-season top three and the full standings.",
-    "The season in progress shows live standings that update nightly; finishes appear after the playoffs.",
+    "Each season has its own record book: the champion's seed and draft slot, the final, best and worst records, biggest risers and drops, the biggest blowout, the longest streaks and the best single week in every category.",
+    "The season in progress shows live standings and records so far that update nightly; finishes appear after the playoffs.",
   ],
   h2h: [
     "Every owner's record against every other owner, built from the weekly matchups.",
@@ -62,9 +76,16 @@ const HELP = {
     "Team names change often, so search a name (or part of one) to find who had it.",
   ],
   draft: [
+    "Does draft position matter? How each first-round slot has finished: average finish, titles, top three and playoffs, for the tournament or the regular season. Hover a bar for its numbers.",
+    "Biggest climbs and falls from draft slot to finish, and which owners finish better than they pick.",
     "Average draft position: where each owner usually picks in round 1, and how often they had the #1 pick.",
     "Every pick of every draft since 2005-06. Filter by season, pick number (try #1 for every first overall pick) or owner.",
     "Search a player, or click a player's name, for a Did you know card: how often they were drafted, who took them most, and their earliest pick.",
+  ],
+  odds: [
+    "Each team's chance of making the playoffs this season, recalculated every Monday from the week that just ended.",
+    "Last week shows how much each team's odds moved, and the trend line shows every week so far.",
+    "Bye is the chance of a top-two seed, which skips the first playoff round. Open How the odds work for the method.",
   ],
 };
 
@@ -90,6 +111,53 @@ function PageHelp({ page }) {
         {items.map((t) => <li key={t}>{t}</li>)}
       </ul>
     </details>
+  );
+}
+
+// ---------- feedback (Netlify Forms) ----------
+// Netlify finds the form from the hidden copy in index.html at deploy time and stores each submission.
+// Emails go to whatever address is set in Netlify (Forms > Form notifications), so no address lives in the code.
+function Feedback() {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+  const submit = async (e) => {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      const body = new URLSearchParams(new FormData(e.currentTarget)).toString();
+      const res = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+      if (!res.ok) throw new Error(res.status);
+      setStatus("sent");
+    } catch {
+      setStatus("error");
+    }
+  };
+  if (status === "sent") return <p className="fb-done" role="status">Thanks! Your note is on its way to Craig.</p>;
+  if (!open) return <button type="button" className="fb-open" onClick={() => setOpen(true)}>Send feedback</button>;
+  return (
+    <form className="fb" name="feedback" method="POST" data-netlify="true" netlify-honeypot="bot-field" onSubmit={submit}>
+      <input type="hidden" name="form-name" value="feedback" />
+      <p hidden><label>Leave this empty <input name="bot-field" tabIndex={-1} autoComplete="off" /></label></p>
+      <div className="fb-row">
+        <label className="field">
+          <span className="field-label">Your name (optional)</span>
+          <input type="text" name="name" autoComplete="name" maxLength={80} />
+        </label>
+        <label className="field">
+          <span className="field-label">Email for a reply (optional)</span>
+          <input type="email" name="email" autoComplete="email" maxLength={120} />
+        </label>
+      </div>
+      <label className="field">
+        <span className="field-label">Idea, bug or wrong stat</span>
+        <textarea name="message" rows={4} required maxLength={2000} />
+      </label>
+      <div className="fb-actions">
+        <button type="submit" className="fb-send" disabled={status === "sending"}>{status === "sending" ? "Sending..." : "Send"}</button>
+        <button type="button" className="fb-cancel" onClick={() => { setOpen(false); setStatus("idle"); }}>Cancel</button>
+        {status === "error" && <span className="fb-err" role="alert">That didn't go through. Try again in a minute.</span>}
+      </div>
+    </form>
   );
 }
 
@@ -205,6 +273,24 @@ const OwnerLink = ({ name }) => <a href={"#owner-" + L.slug(name)}>{name}</a>;
 const Finish = ({ n }) =>
   n && n <= 3 ? <span className={"chip chip-" + n}>{L.ordinal(n)}</span> : <span className="dim">-</span>;
 const record = (r) => `${r.w}-${r.l}-${r.t}`;
+
+// Win % with or without ties: one site-wide choice, shown as a small toggle next to the win % it changes.
+const TiesContext = createContext({ countTies: false, setCountTies: () => {} });
+function TiesToggle({ field }) {
+  const { countTies, setCountTies } = useContext(TiesContext);
+  const toggle = (
+    <span className="ties-toggle">
+      <Segmented
+        label="How win percentage is figured"
+        value={countTies}
+        onChange={setCountTies}
+        options={[[false, "Ties left out"], [true, "Ties count"]]}
+      />
+    </span>
+  );
+  // In a row of filters it gets a label like the other fields.
+  return field ? <div className="field"><span className="field-label">Win %</span>{toggle}</div> : toggle;
+}
 
 function Segmented({ label, value, onChange, options }) {
   return (
@@ -397,7 +483,8 @@ function RecordBook({ owners, countTies }) {
       <section aria-labelledby="career-h">
         <div className="section-head">
           <h2 id="career-h">Career leaders</h2>
-          <p className="hint">Owners with at least 10 seasons. {countTies ? "Ties count as games played." : "Ties are left out of win %."}</p>
+          <p className="hint">Owners with at least 10 seasons.</p>
+          <TiesToggle />
         </div>
         <div className="grid-3">
           <Ledger title="Win %" items={byPct.map((o) => ({ main: <OwnerLink name={o.name} />, val: L.fmtPct(o.pct), sub: `${L.fmtInt(o.w)}-${L.fmtInt(o.l)}` }))} />
@@ -409,6 +496,7 @@ function RecordBook({ owners, countTies }) {
       <section aria-labelledby="seasons-h">
         <div className="section-head">
           <h2 id="seasons-h">Best single seasons</h2>
+          <TiesToggle />
         </div>
         <div className="grid-2">
           <Ledger title="Win %" items={bestPct.map((r) => ({ main: <OwnerLink name={r.owner} />, val: L.fmtPct(r.pct), sub: `${r.season}, ${r.team}` }))} />
@@ -457,7 +545,7 @@ function OwnersPage({ owners, countTies }) {
     <>
       <header className="page-head">
         <h1>Owners</h1>
-        <p className="lede">Career totals for everyone who has run a team, through {L.LAST_FINISHED}. {countTies ? "Win % counts ties as games." : "Win % leaves ties out."}</p>
+        <p className="lede">Career totals for everyone who has run a team, through {L.LAST_FINISHED}.</p>
       </header>
       <div className="controls">
         <Field id="owner-search" label="Search owners">
@@ -467,6 +555,7 @@ function OwnersPage({ owners, countTies }) {
           <input type="checkbox" checked={vetsOnly} onChange={(e) => setVetsOnly(e.target.checked)} />
           Only owners with 10 or more seasons
         </label>
+        <TiesToggle field />
       </div>
       <DataTable caption="Career totals by owner" columns={columns} rows={rows} sort={sort} onSort={onSort} rowKey={(r) => r.name} />
     </>
@@ -565,6 +654,7 @@ function OwnerPage({ slug, owners, countTies }) {
         <div className="section-head">
           <h2 id="trend-h">Win % by season</h2>
           <p className="hint">Gold dots are tournament titles. The dashed line marks 50%.</p>
+          <TiesToggle />
         </div>
         <Sparkline rows={o.rows.filter((r) => !r.current)} countTies={countTies} />
       </section>
@@ -614,7 +704,7 @@ function SeasonsPage({ start, countTies }) {
         ))}
       </nav>
       <section aria-labelledby="season-h">
-        <div className="section-head"><h2 id="season-h">{season.label}</h2></div>
+        <div className="section-head"><h2 id="season-h">{season.label}</h2><TiesToggle /></div>
         {season.current && <p className="hint">Season in progress. Records update nightly from Yahoo; finishes appear once the playoffs are done.</p>}
         {!season.current && (
           <div className="results">
@@ -651,7 +741,81 @@ function SeasonsPage({ start, countTies }) {
           ]}
         />
       </section>
+      <SeasonBook start={season.start} countTies={countTies} />
     </>
+  );
+}
+
+// A mini record book for one season: standings and draft notes, then records from that season's weekly games.
+function SeasonBook({ start, countTies }) {
+  const f = L.seasonFacts(start, countTies);
+  const g = H.seasonGameRecords(start);
+  if (!f) return null;
+  const s = f.season;
+  const team = (t) => <><OwnerLink name={t.owner} /> <span className="dim">{t.team}</span></>;
+  const vs = (r) => <>vs <OwnerLink name={r.opp} />, week {r.week}{r.playoff ? " (playoffs)" : ""}</>;
+  const final = g && f.champ ? g.sideFor(f.champ.owner) : null;
+  const runnerUp = s.teams.find((t) => t.tourney === 2);
+  const notes = [];
+  if (f.champ && !s.current) {
+    notes.push(
+      <><OwnerLink name={f.champ.owner} /> won the title{f.champSeed && <> as the {f.champSeed === 1 ? "top seed" : `#${f.champSeed} seed`}</>}
+        {f.champSlot && <>, after drafting {L.ordinal(f.champSlot.pick)} ({f.champSlot.player} in round 1)</>}.
+        {final && runnerUp && final.opp === runnerUp.owner && <> Beat <OwnerLink name={final.opp} /> {fmtCats(final.cf)}-{fmtCats(final.ca)} in the final.</>}
+      </>
+    );
+  }
+  if (f.regChamp && f.regChampFinish && f.regChamp !== f.champ) {
+    notes.push(<><OwnerLink name={f.regChamp.owner} /> won the regular season and finished {L.ordinal(f.regChampFinish)} in the tournament.</>);
+  }
+  if (f.firstPick && f.firstPick.owner !== f.champ?.owner) {
+    const t = f.firstPick.finish;
+    notes.push(
+      <><OwnerLink name={f.firstPick.owner} /> took {f.firstPick.player} with the #1 pick
+        {t && t.rank ? <> and finished {L.ordinal(t.rank)}.</> : "."}
+      </>
+    );
+  }
+  if (f.newOwners.length) notes.push(<>First season in the league: {f.newOwners.map((t, i) => <span key={t.owner}>{i ? ", " : ""}<OwnerLink name={t.owner} /></span>)}.</>);
+  return (
+    <section aria-labelledby="book-h">
+      <div className="section-head">
+        <h2 id="book-h">{s.label} record book</h2>
+        {s.current && <p className="hint">So far this season. Updates nightly.</p>}
+      </div>
+      {notes.length > 0 && (
+        <ul className="notes">
+          {notes.map((n, i) => <li key={i}>{n}</li>)}
+        </ul>
+      )}
+      <dl className="stats">
+        <Stat label="Best record" value={record(f.best)} sub={<>{team(f.best)}, {L.fmtPct(f.best.pct)}</>} />
+        <Stat label="Worst record" value={record(f.worst)} sub={<>{team(f.worst)}, {L.fmtPct(f.worst.pct)}</>} />
+        {f.riser && <Stat label="Most improved" value={`${L.ordinal(f.riser.before)} to ${L.ordinal(f.riser.rank)}`} sub={<>{team(f.riser)}, tournament finish up {f.riser.change} places from last season</>} />}
+        {f.faller && <Stat label="Biggest drop" value={`${L.ordinal(f.faller.before)} to ${L.ordinal(f.faller.rank)}`} sub={<>{team(f.faller)}, tournament finish down {-f.faller.change} places from last season</>} />}
+        {g?.blowout && <Stat label="Biggest blowout" value={`${fmtCats(g.blowout.cf)}-${fmtCats(g.blowout.ca)}`} sub={<><OwnerLink name={g.blowout.owner} /> {vs(g.blowout)}</>} />}
+        {g?.winRun && <Stat label="Longest win streak" value={`${g.winRun.n} weeks`} sub={<><OwnerLink name={g.winRun.from.owner} />, weeks {g.winRun.from.week} to {g.winRun.to.week}</>} />}
+        {g?.loseRun && <Stat label="Longest losing streak" value={`${g.loseRun.n} weeks`} sub={<><OwnerLink name={g.loseRun.from.owner} />, weeks {g.loseRun.from.week} to {g.loseRun.to.week}</>} />}
+      </dl>
+      {g && g.highs.length > 0 && (
+        <>
+          <h3 className="sub-h">Best single weeks by category</h3>
+          <p className="hint">Highest weekly total in each category (fewest for turnovers), regular season and playoffs. Long weeks, like the All-Star break, tend to hold the counting records.</p>
+          <DataTable
+            caption={`${s.label} weekly category highs`}
+            rowKey={(r) => r.id}
+            rows={g.highs}
+            columns={[
+              { key: "label", label: "Category" },
+              { key: "v", label: "Best week", num: true, render: (r) => (r.raw.includes(".") ? r.raw : L.fmtInt(r.v)) + (r.low ? " (fewest)" : "") },
+              { key: "owner", label: "Owner", render: (r) => <OwnerLink name={r.side.owner} /> },
+              { key: "week", label: "When", render: (r) => <>Week {r.side.week}{r.side.playoff ? ", playoffs" : ""} <span className="dim">vs {r.side.opp}</span></> },
+            ]}
+          />
+        </>
+      )}
+      {!g && !s.current && s.start >= 2005 && <p className="hint">Weekly game records appear once the matchups are loaded.</p>}
+    </section>
   );
 }
 
@@ -688,6 +852,7 @@ function H2HFilters({ filter, setFilter, children }) {
           options={[["all", "All"], ["reg", "Regular season"], ["playoff", "Playoffs"]]}
         />
       </div>
+      <TiesToggle field />
       <Field id="h2h-from" label="From">
         <select id="h2h-from" className="narrow" value={filter.from ?? ""} onChange={set("from")}>
           <option value="">First season</option>
@@ -1036,6 +1201,7 @@ function TeamsPage({ countTies, ver }) {
             {L.OWNER_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </Field>
+        <TiesToggle field />
         <p className="count" aria-live="polite">{rows.length} of {all.length} teams</p>
       </div>
       <DataTable
@@ -1083,6 +1249,7 @@ function DraftPage() {
         <h1>Draft history</h1>
         <p className="lede">Every pick of every draft since {L.SEASON_LIST.find((s) => s.start === years[years.length - 1])?.label}, from Yahoo.</p>
       </header>
+      <DraftImpact />
       <DraftSlots />
       <section aria-labelledby="picks-h">
       <div className="section-head"><h2 id="picks-h">Every pick</h2></div>
@@ -1159,6 +1326,142 @@ function PlayerFacts({ rows, query }) {
   );
 }
 
+// ---------- Draft position vs finish ----------
+// Does an early pick pay off? Each owner's first-round slot against how the team finished, completed seasons only.
+function DraftImpact() {
+  const [key, setKey] = useState("rank");
+  const d = useMemo(() => L.draftImpact(key), [key]);
+  const [sort, onSort] = useSort("slot", "asc");
+  const [oSort, onOSort] = useSort("gain");
+  if (!d.rows.length) return null;
+  const word = key === "rank" ? "tournament" : "regular season";
+  const first = d.bySlot[0];
+  const lastSlot = d.bySlot[d.bySlot.length - 1];
+  const [early, , late] = d.groups;
+  const pctOf = (n, of) => Math.round((n / of) * 100) + "%";
+  const finishRow = (r) => ({ main: <OwnerLink name={r.owner} />, val: `#${r.slot} to ${L.ordinal(r[key])}`, sub: `${r.season}, ${r.team}` });
+  const places = Math.abs(d.spread);
+  return (
+    <section aria-labelledby="impact-h">
+      <div className="section-head">
+        <h2 id="impact-h">Does draft position matter?</h2>
+        <p className="hint">Each owner's first-round pick against where the team finished, {d.drafts} drafts ({d.rows[0].season} to {d.rows[d.rows.length - 1].season}). Completed seasons only.</p>
+      </div>
+      <div className="controls controls-gap">
+        <div className="field">
+          <span className="field-label">Finish</span>
+          <Segmented
+            label="Which finish to compare"
+            value={key}
+            onChange={setKey}
+            options={[["rank", "Tournament"], ["seed", "Regular season"]]}
+          />
+        </div>
+      </div>
+      <dl className="stats">
+        <Stat
+          label="The #1 pick"
+          value={`${first.top3} of ${first.n} top three`}
+          sub={`Average ${word} finish ${first.avg.toFixed(1)}, ${first.firsts} ${key === "rank" ? "title" : "regular-season title"}${first.firsts === 1 ? "" : "s"}`}
+        />
+        <Stat
+          label={`Picks ${early.label.slice(6)} vs ${late.label.slice(6)}`}
+          value={`${pctOf(early.top3, early.n)} vs ${pctOf(late.top3, late.n)}`}
+          sub={`How often they finish top three. Average finish ${early.avg.toFixed(1)} vs ${late.avg.toFixed(1)}.`}
+        />
+        <Stat
+          label={`Trend from pick 1 to pick ${lastSlot.slot}`}
+          value={places < 1 ? "Almost none" : `${places.toFixed(1)} places`}
+          sub={places < 1
+            ? `The best-fit line moves less than one place across the whole draft (${places.toFixed(1)}): where you pick hardly changes where you finish.`
+            : `On the best-fit line, picking ${lastSlot.slot}th instead of 1st means finishing about ${places.toFixed(1)} places ${d.slope > 0 ? "lower" : "higher"}.`}
+        />
+      </dl>
+      <SlotChart rows={d.bySlot} word={word} />
+      <DataTable
+        caption={`${word} finish by draft slot`}
+        sort={sort}
+        onSort={onSort}
+        rowKey={(r) => r.slot}
+        rows={sortRows(d.bySlot, sort)}
+        columns={[
+          { key: "slot", label: "Pick", num: true, render: (r) => `#${r.slot}` },
+          { key: "n", label: "Drafts", num: true },
+          { key: "avg", label: "Avg finish", num: true, render: (r) => r.avg.toFixed(1) },
+          { key: "firsts", label: key === "rank" ? "Titles" : "1st place", num: true, render: (r) => r.firsts ? <span title={r.winners.map((w) => `${w.owner} ${w.season}`).join(", ")}>{r.firsts}</span> : <span className="dim">-</span> },
+          { key: "top3", label: "Top three", num: true, render: (r) => `${r.top3} (${pctOf(r.top3, r.n)})` },
+          { key: "playoffs", label: "Made playoffs", num: true, render: (r) => `${r.playoffs} (${pctOf(r.playoffs, r.n)})` },
+          { key: "best", label: "Best", num: true, render: (r) => L.ordinal(r.best) },
+          { key: "worst", label: "Worst", num: true, render: (r) => L.ordinal(r.worst) },
+        ]}
+      />
+      <div className="grid-2 impact-lists">
+        <Ledger title="Biggest climbs: late pick, high finish" items={d.climbs.map(finishRow)} />
+        <Ledger title="Biggest falls: early pick, low finish" items={d.falls.map(finishRow)} />
+      </div>
+      <h3 className="sub-h">Who beats their draft slot?</h3>
+      <p className="hint">Owners with 10 or more drafts. Places gained is the average of draft slot minus {word} finish; above zero means they finish better than they pick.</p>
+      <DataTable
+        caption="Draft slot versus finish by owner"
+        sort={oSort}
+        onSort={onOSort}
+        rowKey={(r) => r.owner}
+        rows={sortRows(d.owners, oSort)}
+        columns={[
+          { key: "owner", label: "Owner", render: (r) => <OwnerLink name={r.owner} /> },
+          { key: "drafts", label: "Drafts", num: true },
+          { key: "slot", label: "Avg pick", num: true, render: (r) => r.slot.toFixed(1) },
+          { key: "finish", label: "Avg finish", num: true, render: (r) => r.finish.toFixed(1) },
+          { key: "gain", label: "Places gained", num: true, render: (r) => (Math.abs(r.gain) < 0.05 ? "0.0" : (r.gain > 0 ? "+" : "") + r.gain.toFixed(1)) },
+        ]}
+      />
+    </section>
+  );
+}
+
+// Bars: how often each draft slot finished in the top three. The dashed line is a fair share (3 of 12).
+function SlotChart({ rows, word }) {
+  const [ref, W] = useWidth(280, 640);
+  const H = 190, pad = { l: 40, r: 10, t: 14, b: 30 };
+  const max = Math.max(50, ...rows.map((r) => Math.ceil(((r.top3 / r.n) * 100) / 25) * 25));
+  const slotW = (W - pad.l - pad.r) / rows.length;
+  const barW = Math.min(36, slotW - 6);
+  const Y = (v) => pad.t + (1 - v / max) * (H - pad.t - pad.b);
+  const fair = (3 / rows.length) * 100;
+  const ticks = [];
+  for (let v = 0; v <= max; v += 25) ticks.push(v);
+  return (
+    <figure className="chart" ref={ref}>
+      <figcaption className="chart-title">How often each pick finished top three in the {word}. Dashed line: a fair share ({Math.round(fair)}%).</figcaption>
+      <svg className="spark" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Top-three ${word} finishes by draft slot. Full numbers are in the table below.`}>
+        {ticks.map((v) => (
+          <g key={v}>
+            <line x1={pad.l} x2={W - pad.r} y1={Y(v)} y2={Y(v)} className="grid" />
+            <text x={pad.l - 8} y={Y(v) + 4} textAnchor="end" className="axis">{v}%</text>
+          </g>
+        ))}
+        {rows.map((r, i) => {
+          const p = (r.top3 / r.n) * 100;
+          const x = pad.l + i * slotW + (slotW - barW) / 2;
+          const y = Y(p), h = Y(0) - y;
+          const rad = Math.min(4, h / 2, barW / 2);
+          return (
+            <g key={r.slot} className="bar-g">
+              <title>{`Pick #${r.slot}: top three ${r.top3} of ${r.n} times (${Math.round(p)}%), average finish ${r.avg.toFixed(1)}, ${r.firsts} first-place finish${r.firsts === 1 ? "" : "es"}`}</title>
+              <rect x={pad.l + i * slotW} y={pad.t} width={slotW} height={H - pad.t - pad.b} fill="transparent" />
+              {h > 0 && (
+                <path className="bar" d={`M${x},${Y(0)} V${y + rad} Q${x},${y} ${x + rad},${y} H${x + barW - rad} Q${x + barW},${y} ${x + barW},${y + rad} V${Y(0)} Z`} />
+              )}
+              <text x={pad.l + i * slotW + slotW / 2} y={H - 10} textAnchor="middle" className="axis">#{r.slot}</text>
+            </g>
+          );
+        })}
+        <line x1={pad.l} x2={W - pad.r} y1={Y(fair)} y2={Y(fair)} className="grid-mid" />
+      </svg>
+    </figure>
+  );
+}
+
 // Average draft slot: the owner's round 1 pick, for owners with 10 or more drafts.
 function DraftSlots() {
   const [sort, onSort] = useSort("avg", "asc");
@@ -1206,11 +1509,19 @@ export default function App() {
   }, []);
   const [route, param] = parseRoute(hash);
   useEffect(() => { window.scrollTo(0, 0); }, [hash]);
-  // On phones the menu is a swipeable row; keep the current page's link in view.
-  useEffect(() => {
-    document.querySelector('.nav a[aria-current="page"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [hash]);
   const active = route === "owner" ? "owners" : route;
+  // Phones: the menu is a drop-down list that closes when a page is picked.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [hash]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const away = (e) => { if (!e.target.closest?.(".masthead")) setMenuOpen(false); };
+    const esc = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
+  }, [menuOpen]);
+  const currentLabel = (NAV.find(([id]) => id === active) || NAV[0])[1];
 
   let page;
   if (route === "owner") page = <OwnerPage slug={param} owners={owners} countTies={countTies} />;
@@ -1219,25 +1530,26 @@ export default function App() {
   else if (route === "h2h") page = <H2HPage param={param} countTies={countTies} filter={h2hFilter} setFilter={setH2hFilter} liveGames={liveGames} />;
   else if (route === "teams") page = <TeamsPage countTies={countTies} ver={ver} />;
   else if (route === "draft") page = <DraftPage />;
+  else if (route === "odds") page = <OddsPage />;
+  else if (route === "now") page = <CurrentSeason tab={param} />;
   else page = <RecordBook owners={owners} countTies={countTies} />;
 
   return (
+    <TiesContext.Provider value={{ countTies, setCountTies }}>
     <div className="shell">
       <div className="masthead">
         <a className="brand" href="#"><Pine />Laker Fantasy NBA</a>
-        <nav aria-label="Main" className="nav">
+        <button type="button" className="menu-btn" aria-expanded={menuOpen} aria-controls="main-nav" onClick={() => setMenuOpen((o) => !o)}>
+          <span className="menu-icon" aria-hidden="true" />
+          {currentLabel}
+        </button>
+        <nav aria-label="Main" id="main-nav" className={"nav" + (menuOpen ? " open" : "")}>
           {NAV.map(([id, label]) => (
             <a key={id || "home"} href={"#" + id} aria-current={active === id || (id === "" && !NAV.some(([n]) => n === active) ) ? "page" : undefined}>
               {label}
             </a>
           ))}
         </nav>
-        <Segmented
-          label="How win percentage is figured"
-          value={countTies}
-          onChange={setCountTies}
-          options={[[false, "Ties left out"], [true, "Ties count"]]}
-        />
       </div>
       {H.IS_SAMPLE && (
         <p className="notice notice-sample">
@@ -1247,16 +1559,25 @@ export default function App() {
       <PageHelp page={HELP[route] ? route : "home"} />
       <main>{page}</main>
       <footer className="foot">
-        {/* Yahoo's required attribution (developer.yahoo.com/attribution): official logo, unaltered, linked to yahoo.com. */}
-        <a className="yahoo-attr" href="https://www.yahoo.com/?ilc=401" target="_blank" rel="noopener">
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_white.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_white_retina.png 2x" />
-            <img src="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_purple_retina.png 2x" width="134" height="20" alt="Powered by Yahoo" />
-          </picture>
-        </a>
-        <p>Fantasy data provided by Yahoo Fantasy</p>
+        <div className="foot-top">
+          <div className="foot-left">
+            {/* Yahoo's required attribution (developer.yahoo.com/attribution): official logo, unaltered, linked to yahoo.com. */}
+            <a className="yahoo-attr" href="https://www.yahoo.com/?ilc=401" target="_blank" rel="noopener">
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_white.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_white_retina.png 2x" />
+                <img src="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_purple_retina.png 2x" width="134" height="20" alt="Powered by Yahoo" />
+              </picture>
+            </a>
+            <p>Fantasy data provided by Yahoo Fantasy</p>
+          </div>
+          <div className="foot-right">
+            <p className="credits">Site managed by Craig <span aria-hidden="true">·</span> Built by Claude</p>
+            <Feedback />
+          </div>
+        </div>
         <p>An independent league site. Colors and pines nod to University Lake School, home of the Lakers, and it is not affiliated with the school.</p>
       </footer>
     </div>
+    </TiesContext.Provider>
   );
 }

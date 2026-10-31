@@ -123,7 +123,7 @@ function Feedback() {
           <input type="text" name="name" autoComplete="name" maxLength={80} />
         </label>
         <label className="field">
-          <span className="field-label">Email, if you want a reply (optional)</span>
+          <span className="field-label">Email for a reply (optional)</span>
           <input type="email" name="email" autoComplete="email" maxLength={120} />
         </label>
       </div>
@@ -1294,16 +1294,22 @@ export default function App() {
       <PageHelp page={HELP[route] ? route : "home"} />
       <main>{page}</main>
       <footer className="foot">
-        {/* Yahoo's required attribution (developer.yahoo.com/attribution): official logo, unaltered, linked to yahoo.com. */}
-        <a className="yahoo-attr" href="https://www.yahoo.com/?ilc=401" target="_blank" rel="noopener">
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_white.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_white_retina.png 2x" />
-            <img src="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_purple_retina.png 2x" width="134" height="20" alt="Powered by Yahoo" />
-          </picture>
-        </a>
-        <p>Fantasy data provided by Yahoo Fantasy</p>
-        <p className="credits">Site managed by Craig Bruce <span aria-hidden="true">·</span> Built by Claude</p>
-        <Feedback />
+        <div className="foot-top">
+          <div className="foot-left">
+            {/* Yahoo's required attribution (developer.yahoo.com/attribution): official logo, unaltered, linked to yahoo.com. */}
+            <a className="yahoo-attr" href="https://www.yahoo.com/?ilc=401" target="_blank" rel="noopener">
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_white.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_white_retina.png 2x" />
+                <img src="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png" srcSet="https://poweredby.yahoo.com/poweredby_yahoo_h_purple.png 1x, https://poweredby.yahoo.com/poweredby_yahoo_h_purple_retina.png 2x" width="134" height="20" alt="Powered by Yahoo" />
+              </picture>
+            </a>
+            <p>Fantasy data provided by Yahoo Fantasy</p>
+          </div>
+          <div className="foot-right">
+            <p className="credits">Site managed by Craig Bruce <span aria-hidden="true">·</span> Built by Claude</p>
+            <Feedback />
+          </div>
+        </div>
         <p>An independent league site. Colors and pines nod to University Lake School, home of the Lakers, and it is not affiliated with the school.</p>
       </footer>
     </div>

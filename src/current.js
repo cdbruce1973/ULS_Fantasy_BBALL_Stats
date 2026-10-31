@@ -180,6 +180,7 @@ export function nightSummary(rows, core) {
   const pts = CATS.map((c) => rotoPoints(withGames.map((t) => t.totals[c.id]), c.low));
   withGames.forEach((t, i) => (t.score = pts.reduce((a, col) => a + col[i], 0)));
   const ranked = [...withGames].sort((a, b) => b.score - a.score);
+  ranked.forEach((t) => (t.place = 1 + ranked.filter((x) => x.score > t.score).length));
 
   const counted = played.filter((p) => p.active);
   const topPlayers = [...counted].sort((a, b) => b.value - a.value).slice(0, 5);

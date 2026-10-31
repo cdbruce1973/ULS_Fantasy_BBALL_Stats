@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import * as C from "./current.js";
-import { slug } from "./lib.js";
+import { ordinal, slug } from "./lib.js";
 
 // "This season": the season in progress, read live from Supabase (synced from Yahoo every night).
 // Tabs: #now (last night and its Best of), #now-week (this week's matchups by category),
@@ -121,7 +121,7 @@ function LastNight({ core }) {
           <section aria-labelledby="box-h">
             <div className="section-head">
               <h2 id="box-h">{me ? `${me}'s night` : "Every team's night"}</h2>
-              <p className="hint">Starters count for the team. Bench and IL games are shown but don't count. Night score is rotisserie points across the 11 categories (12 for the best team in a category). The top three are open; tap any team to open it.</p>
+              <p className="hint">Starters count for the team. Bench and IL games are shown but don't count. Night score: in each of the 11 categories the teams are ranked on their starters' totals (best gets 12 points, worst 1, ties split), then the points are added up. 132 is the most possible. The top three are open; tap any team to open it.</p>
             </div>
             <div className="box-list">
               {shown.map((t, i) => <TeamNight key={t.id + date} t={t} teamsPlayed={night.ranked.length} open={!!me || i < 3} />)}
@@ -269,7 +269,7 @@ function TeamNight({ t, teamsPlayed, open }) {
     <details className="box" open={open}>
       <summary>
         <span className="box-owner"><OwnerLink name={t.owner} /> <span className="dim">{t.team}</span></span>
-        <span className="box-score">{t.score != null ? `${t.score.toFixed(1)} of ${teamsPlayed * 11}` : "No games"}</span>
+        <span className="box-score">{t.score != null ? `Night score ${t.score.toFixed(1)} · ${ordinal(t.place)} of ${teamsPlayed}` : "No games"}</span>
       </summary>
       {list.length > 0 && (
         <div className="tbl-wrap">

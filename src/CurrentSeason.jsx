@@ -139,8 +139,9 @@ function BestOf({ night }) {
     <section aria-labelledby="best-h">
       <div className="section-head">
         <h2 id="best-h">Best of the night</h2>
-        <p className="hint">Player value adds up how far above the night's average a player was in every category (z-scores; FG% and FT% weighted by shots).</p>
+        <p className="hint">Value is one score for how much a player helped across all 11 categories. 0 is an average game.</p>
       </div>
+      <ValueExplainer where="night" />
       <div className="grid-3 best-grid">
         <div>
           <h3>Owner of the night</h3>
@@ -201,6 +202,48 @@ function BestOf({ night }) {
         ))}
       </div>
     </section>
+  );
+}
+
+// Plain-English account of the value score (C.playerValues) for managers.
+function ValueExplainer({ where }) {
+  return (
+    <details className="explain">
+      <summary>What is player value, and what does it tell me?</summary>
+      <div className="explain-body">
+        <p>
+          <strong>How it's worked out.</strong> Each of the 11 categories is scored separately: how far the player's line was above or below
+          {where === "night" ? " the average for everyone who played that night" : " the average per game for every rostered player"}, measured in
+          "typical gaps" so a category where everyone is close together (steals, blocks) counts as much as one with big numbers (points).
+          The 11 scores are added up. Turnovers count in reverse, so fewer is better. FG% and FT% are weighted by attempts:
+          10-for-14 helps a lot, 1-for-1 barely moves it, and 4-for-17 hurts.
+        </p>
+        <p>
+          <strong>Reading the number.</strong> 0 is an average game. About +3 is a good game, +6 or more is a big one, and
+          below 0 means the player cost you more than he gave across the board. Because every category counts the same,
+          a center with 14 rebounds and 4 blocks can score as high as a guard with 30 points, which is how a category league works.
+        </p>
+        {where === "night" ? (
+          <p>
+            <strong>What it tells you.</strong> Who actually won your night across all categories, not just who scored the most.
+            "Left on the bench" uses the same score to show the best games your lineup didn't count, a nudge to check who you start.
+          </p>
+        ) : (
+          <p>
+            <strong>What it tells you.</strong> Change is recent form against his own season norm. A big plus means he's playing
+            above his usual level (more minutes, a hot streak, a teammate out), so start him or hold him. A big minus means he's slipping:
+            worth a look before you start or trade for him, or a sell-high check if others still value him on his name.
+            Pick a category to see where the change comes from (say, scoring is steady but his 3s fell off).
+          </p>
+        )}
+        <p className="dim">
+          It treats all 11 categories equally, so it doesn't know your strategy: if you're punting FT%, a poor free-throw shooter is worth more
+          to you than his score says. {where === "night"
+            ? "One night is a small sample; the Trends tab shows the same score over 7 or 30 days."
+            : "Over just 2 or 3 games it swings a lot, so lean on it more as the window fills up."}
+        </p>
+      </div>
+    </details>
   );
 }
 
@@ -523,9 +566,9 @@ function Trends({ core }) {
             <p className="hint">
               Per-game averages{days ? ` from ${fmtDate(trends.since, { month: "short", day: "numeric" })} to ${fmtDate(trends.lastDate, { month: "short", day: "numeric" })}, against the player's season average` : " for the season"}.
               {" "}Only games while on a league roster count.{me ? "" : ` League view shows players with ${minGames}+ games in the window.`}
-              {cat === "value" ? " Overall value is the per-game z-score total across all 11 categories." : ""}
             </p>
           </div>
+          {cat === "value" && <ValueExplainer where="trends" />}
           {days > 0 && (
             <div className="seg trend-dir" role="group" aria-label="Sort direction">
               <button type="button" aria-pressed={sortDir === "desc"} onClick={() => setSortDir("desc")}>Improving first</button>

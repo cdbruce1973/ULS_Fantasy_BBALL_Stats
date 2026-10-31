@@ -30,6 +30,7 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 - Every finished team also carries `rank` (Yahoo final_rank, 1-12) and `seed` (regular-season finish, 1-12) for the Draft page's "Does draft position matter?" analysis and each season's record book (Seasons page). The league plays a six-team playoff (seeds 1-6; final ranks 1-6 are always those teams).
 - Head-to-head routes: `#h2h`, `#h2h-<owner>`, `#h2h-<owner>-vs-<opp>`. `SAMPLE_H2H=1` builds with no real games show made-up games with a banner.
 - Nightly refresh: `supabase/nightly_sync.sql` (pg_cron 09:00 UTC `yahoo-sync?current=1`; no rebuild).
+- Playoff odds (`#odds`): edge function `playoff-odds` simulates the rest of the regular season every Monday 10:00 UTC (`supabase/playoff_odds.sql`) into `playoff_odds`; the page reads `playoff_odds_view` live. Model and back-test in `docs/PLAYOFF_ODDS.md`.
 
 ## Next steps
 1. Open question: shared password (likely unneeded: production is public, Netlify team login only guards previews).

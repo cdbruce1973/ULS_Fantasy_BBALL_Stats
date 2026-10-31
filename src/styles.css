@@ -305,3 +305,21 @@ select.narrow { min-width: 150px; }
 .sub-h { margin-top: 26px; }
 .notes { margin: 0 0 18px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
 .notes li::marker { color: var(--accent); }
+
+/* ---------- Playoff odds ---------- */
+.odds-asof { margin: 0 0 8px; }
+.odds .odds-team { font-size: 12px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
+.odds-cell { display: inline-flex; align-items: center; gap: 8px; min-width: 150px; }
+.odds-cell .n { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+.odds-bar { flex: 1; height: 8px; min-width: 80px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.odds-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.odds-up { color: var(--accent); font-weight: 700; }
+.odds-down { color: var(--loss); font-weight: 700; }
+.odds tr.odds-cutline td { border-bottom: 2px dashed var(--ink-2); }
+.odds-trend { display: block; }
+.odds-trend polyline { stroke: var(--accent); stroke-width: 1.5; }
+.odds-trend circle { fill: var(--accent); }
+.odds-trend-mid { stroke: var(--line); stroke-dasharray: 3 3; }
+.odds-how { margin-top: 18px; max-width: 70ch; color: var(--ink-2); font-size: 14px; }
+.odds-how summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+.odds-how p { margin: 8px 0 0; }

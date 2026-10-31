@@ -3,7 +3,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // Pulls league data from the Yahoo Fantasy API into the database.
 //   POST /yahoo-sync?season=2025            -> sync one season (Yahoo start year)
 //   POST /yahoo-sync?current=1              -> sync the current season and the one before it
-//   optional: &parts=teams,matchups,draft   -> limit what is pulled (default: all three)
+//   optional: &parts=teams,matchups,draft,players -> limit what is pulled (default: all four)
+//   players (current season only): each rostered player's stats for recent days. By default the last
+//   3 days (Yahoo corrects stats for a day or two); &from=YYYY-MM-DD&to=YYYY-MM-DD backfills a range (max 31 days).
 // Guarded by a private key (header x-sync-key) stored in the sync_config table.
 
 const API = "https://fantasysports.yahooapis.com/fantasy/v2";
@@ -113,18 +115,34 @@ async function syncTeams(seasonId: number, key: string) {
 }
 
 async function syncMatchups(seasonId: number, key: string) {
-  const meta = (await yget(`/league/${key}`)).fantasy_content.league[0];
+  const d = await yget(`/league/${key}/settings`);
+  const meta = d.fantasy_content.league[0];
+  const settings = flat(d.fantasy_content.league[1]?.settings ?? []);
   const start = int(meta.start_week) ?? 1;
-  const end = Math.min(int(meta.end_week) ?? start, int(meta.current_week) ?? 999);
+  const current = int(meta.current_week) ?? 999;
+  const end = int(meta.end_week) ?? start;
+  // League settings for the schedule and playoff odds. Ignored if the columns don't exist yet.
+  await db.from("seasons").update({
+    end_week: end,
+    playoff_start_week: int(settings.playoff_start_week),
+    num_playoff_teams: int(settings.num_playoff_teams),
+  }).eq("id", seasonId);
 
   const { data: teamRows } = await db.from("teams").select("id, yahoo_team_key").eq("season_id", seasonId);
   const idByKey = new Map((teamRows ?? []).map((t: any) => [t.yahoo_team_key, t.id]));
 
+  // Every week through the end of the season, so the schedule ahead is stored too (is_complete = false,
+  // no stats). Future playoff weeks have no teams yet; Yahoo either skips them or errors, and both are skipped.
   const out: any[] = [];
   const weeks = Array.from({ length: end - start + 1 }, (_, i) => start + i);
   for (let i = 0; i < weeks.length; i += 4) {
-    const batch = await Promise.all(weeks.slice(i, i + 4).map((w) => yget(`/league/${key}/scoreboard;week=${w}`)));
+    const batch = await Promise.all(weeks.slice(i, i + 4).map((w) =>
+      yget(`/league/${key}/scoreboard;week=${w}`).catch((e) => {
+        if (w <= current) throw e;
+        return null;
+      })));
     for (const d of batch) {
+      if (!d) continue;
       const sb = d.fantasy_content.league[1].scoreboard;
       const matchups = items((sb["0"] ?? sb).matchups);
       for (const m of matchups) {
@@ -136,9 +154,10 @@ async function syncMatchups(seasonId: number, key: string) {
           const rest = flat(t.team.slice(1));
           const stats: Record<string, string> = {};
           for (const s of rest.team_stats?.stats ?? []) stats[s.stat.stat_id] = s.stat.value;
-          return { id: idByKey.get(info.team_key), won: parseFloat(rest.team_points?.total ?? "0"), stats };
+          return { id: idByKey.get(info.team_key), won: parseFloat(rest.team_points?.total ?? "0") || 0, stats };
         });
         if (!side[0].id || !side[1].id) continue;
+        const future = mm.status === "preevent";
         out.push({
           season_id: seasonId,
           week: int(mm.week),
@@ -147,7 +166,7 @@ async function syncMatchups(seasonId: number, key: string) {
           is_playoff: mm.is_playoffs === "1",
           is_consolation: mm.is_consolation === "1",
           team1_cats_won: side[0].won, team2_cats_won: side[1].won,
-          team1_stats: side[0].stats, team2_stats: side[1].stats,
+          team1_stats: future ? null : side[0].stats, team2_stats: future ? null : side[1].stats,
         });
       }
     }
@@ -158,6 +177,61 @@ async function syncMatchups(seasonId: number, key: string) {
     if (error) throw new Error(`matchups insert: ${error.message}`);
   }
   return out.length;
+}
+
+// Yahoo dates games by US Eastern time.
+const easternDate = (t: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(t);
+const addDays = (iso: string, n: number) => {
+  const t = new Date(iso + "T12:00:00Z");
+  t.setUTCDate(t.getUTCDate() + n);
+  return t.toISOString().slice(0, 10);
+};
+
+// Each rostered player's stats for each day, with the slot the manager played them in.
+async function syncPlayers(seasonId: number, key: string, from?: string | null, to?: string | null) {
+  const meta = (await yget(`/league/${key}`)).fantasy_content.league[0];
+  const yesterday = addDays(easternDate(new Date()), -1);
+  let last = to ?? yesterday;
+  if (meta.end_date && last > meta.end_date) last = meta.end_date;
+  let first = from ?? addDays(last, -2);
+  if (meta.start_date && first < meta.start_date) first = meta.start_date;
+  const dates: string[] = [];
+  for (let d = first; d <= last && dates.length < 31; d = addDays(d, 1)) dates.push(d);
+  if (!dates.length) return 0;
+
+  const { data: teamRows } = await db.from("teams").select("id, yahoo_team_key").eq("season_id", seasonId);
+  const jobs = dates.flatMap((date) => (teamRows ?? []).map((t: any) => ({ date, team: t })));
+  let n = 0;
+  for (let i = 0; i < jobs.length; i += 6) {
+    const batch = await Promise.all(jobs.slice(i, i + 6).map(async ({ date, team }) => {
+      const d = await yget(`/team/${team.yahoo_team_key}/roster;date=${date}/players/stats;type=date;date=${date}`);
+      const roster = flat(d.fantasy_content.team.slice(1)).roster ?? {};
+      const players = items((roster["0"] ?? roster).players);
+      return players.map((p: any) => {
+        const info = flat(p.player[0]);
+        const rest = flat(p.player.slice(1));
+        const stats: Record<string, string> = {};
+        for (const s of rest.player_stats?.stats ?? []) stats[s.stat.stat_id] = s.stat.value;
+        return {
+          season_id: seasonId,
+          game_date: date,
+          player_key: info.player_key,
+          team_id: team.id,
+          name: info.name?.full ?? null,
+          nba_team: info.editorial_team_abbr ?? null,
+          positions: info.display_position ?? null,
+          slot: flat(rest.selected_position ?? []).position ?? null,
+          stats,
+        };
+      });
+    }));
+    const rows = batch.flat();
+    if (!rows.length) continue;
+    const { error } = await db.from("player_days").upsert(rows, { onConflict: "season_id,game_date,player_key" });
+    if (error) throw new Error(`player_days upsert: ${error.message}`);
+    n += rows.length;
+  }
+  return n;
 }
 
 async function syncDraft(seasonId: number, key: string) {
@@ -192,16 +266,19 @@ async function syncDraft(seasonId: number, key: string) {
   return rows.length;
 }
 
-async function syncSeason(startYear: number, parts: string[]) {
-  const { data: s } = await db.from("seasons").select("id, yahoo_league_key").eq("start_year", startYear).maybeSingle();
+async function syncSeason(startYear: number, parts: string[], range: { from: string | null; to: string | null }) {
+  const { data: s } = await db.from("seasons").select("id, yahoo_league_key, is_current").eq("start_year", startYear).maybeSingle();
   if (!s?.yahoo_league_key) return { season: startYear, skipped: "no Yahoo league key" };
   const result: Record<string, unknown> = { season: startYear };
-  for (const part of ["teams", "matchups", "draft"]) {
+  for (const part of ["teams", "matchups", "draft", "players"]) {
     if (!parts.includes(part)) continue;
+    // Daily player stats are kept for the season in progress only (unless a range is asked for).
+    if (part === "players" && !s.is_current && !range.from) continue;
     try {
       result[part] = part === "teams" ? await syncTeams(s.id, s.yahoo_league_key)
         : part === "matchups" ? await syncMatchups(s.id, s.yahoo_league_key)
-        : await syncDraft(s.id, s.yahoo_league_key);
+        : part === "draft" ? await syncDraft(s.id, s.yahoo_league_key)
+        : await syncPlayers(s.id, s.yahoo_league_key, range.from, range.to);
     } catch (e) {
       result[part] = `ERROR: ${(e as Error).message}`;
     }
@@ -215,7 +292,8 @@ Deno.serve(async (req) => {
   if (!cfg || req.headers.get("x-sync-key") !== cfg.value) return reply({ error: "unauthorized" }, 401);
 
   const url = new URL(req.url);
-  const parts = (url.searchParams.get("parts") ?? "teams,matchups,draft").split(",");
+  const parts = (url.searchParams.get("parts") ?? "teams,matchups,draft,players").split(",");
+  const range = { from: url.searchParams.get("from"), to: url.searchParams.get("to") };
   const started = new Date().toISOString();
   try {
     let years: number[] = [];
@@ -228,7 +306,7 @@ Deno.serve(async (req) => {
       return reply({ error: "pass ?season=YYYY or ?current=1" }, 400);
     }
     const results = [];
-    for (const y of years) results.push(await syncSeason(y, parts));
+    for (const y of years) results.push(await syncSeason(y, parts, range));
     await db.from("sync_log").insert({ started_at: started, finished_at: new Date().toISOString(), status: "ok", detail: JSON.stringify(results).slice(0, 2000) });
     return reply({ ok: true, results });
   } catch (e) {

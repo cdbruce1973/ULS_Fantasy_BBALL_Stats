@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as L from "./lib.js";
 import * as H from "./h2h.js";
+import OddsPage from "./Odds.jsx";
 
 const NAV = [
   ["", "Record book"],
@@ -9,6 +10,7 @@ const NAV = [
   ["h2h", "Head-to-head"],
   ["teams", "Teams"],
   ["draft", "Draft"],
+  ["odds", "Playoff odds"],
 ];
 
 // ---------- routing (hash based, works on any static host) ----------
@@ -65,6 +67,11 @@ const HELP = {
     "Average draft position: where each owner usually picks in round 1, and how often they had the #1 pick.",
     "Every pick of every draft since 2005-06. Filter by season, pick number (try #1 for every first overall pick) or owner.",
     "Search a player, or click a player's name, for a Did you know card: how often they were drafted, who took them most, and their earliest pick.",
+  ],
+  odds: [
+    "Each team's chance of making the playoffs this season, recalculated every Monday from the week that just ended.",
+    "Last week shows how much each team's odds moved, and the trend line shows every week so far.",
+    "Bye is the chance of a top-two seed, which skips the first playoff round. Open How the odds work for the method.",
   ],
 };
 
@@ -1219,6 +1226,7 @@ export default function App() {
   else if (route === "h2h") page = <H2HPage param={param} countTies={countTies} filter={h2hFilter} setFilter={setH2hFilter} liveGames={liveGames} />;
   else if (route === "teams") page = <TeamsPage countTies={countTies} ver={ver} />;
   else if (route === "draft") page = <DraftPage />;
+  else if (route === "odds") page = <OddsPage />;
   else page = <RecordBook owners={owners} countTies={countTies} />;
 
   return (

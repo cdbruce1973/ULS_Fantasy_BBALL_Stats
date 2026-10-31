@@ -29,6 +29,7 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 - Every page reads Yahoo data. Finished seasons are written at build time by `scripts/export_data.mjs` (public tables, no secrets) into `src/matchups.json` (H2H games) and `src/history.json` (teams, finishes, full drafts, via `src/league.js`). 2004-05 comes from `src/data.js` (the sheet). The current season loads live in the browser: `L.loadLiveSeason()` (teams, draft) and `H.loadLiveGames()` (H2H). A season in progress has no finishes and is left out of best-season lists, banners and per-season averages.
 - Head-to-head routes: `#h2h`, `#h2h-<owner>`, `#h2h-<owner>-vs-<opp>`. `SAMPLE_H2H=1` builds with no real games show made-up games with a banner.
 - Nightly refresh: `supabase/nightly_sync.sql` (pg_cron 09:00 UTC `yahoo-sync?current=1`; no rebuild).
+- Playoff odds (`#odds`): edge function `playoff-odds` simulates the rest of the regular season every Monday 10:00 UTC (`supabase/playoff_odds.sql`) into `playoff_odds`; the page reads `playoff_odds_view` live. Model and back-test in `docs/PLAYOFF_ODDS.md`.
 
 ## Next steps
 1. Open question: shared password (likely unneeded: production is public, Netlify team login only guards previews).

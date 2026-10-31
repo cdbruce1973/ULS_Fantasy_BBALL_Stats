@@ -229,6 +229,44 @@ export function rivalryLists(grid, minGames) {
   return { mostPlayed, lopsided };
 }
 
+// ---------- one season's weekly records ----------
+// Built from that season's games (the season in progress counts its games so far).
+// Weekly category highs compare raw weekly totals, so a long week (All-Star break) can hold a record.
+export function seasonGameRecords(start) {
+  const sides = ALL_SIDES.filter((s) => s.start === start);
+  if (!sides.length) return null;
+  const reg = sides.filter((s) => !s.playoff);
+  const margin = (r) => r.cf - r.ca;
+  const blowout = [...sides].filter((r) => r.res === "W").sort((a, b) => margin(b) - margin(a) || b.cf - a.cf || a.week - b.week)[0] ?? null;
+  const mostCats = [...sides].sort((a, b) => b.cf - a.cf || margin(b) - margin(a) || a.week - b.week)[0];
+  const owners = [...new Set(reg.map((s) => s.owner))];
+  const runs = (res) => owners
+    .map((o) => {
+      const rows = reg.filter((s) => s.owner === o);
+      return longestWinStreak(res === "W" ? rows : rows.map((r) => ({ ...r, res: r.res === "L" ? "W" : "X" })));
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.n - a.n || a.from.week - b.from.week);
+  const winRun = runs("W")[0] ?? null;
+  const loseRun = runs("L")[0] ?? null;
+  // Weekly highs by category (fewest for turnovers). Seasons before 2010-11 have no FG% in Yahoo's data.
+  const highs = CATEGORIES.map(([id, label]) => {
+    const low = LOWER_WINS.has(id);
+    let best = null;
+    for (const s of sides) {
+      const v = parseFloat(s.stats?.[id]);
+      if (!Number.isFinite(v)) continue;
+      if (!best || (low ? v < best.v : v > best.v)) best = { v, side: s, raw: s.stats[id] };
+    }
+    return best && { id, label, low, ...best };
+  }).filter(Boolean);
+  // The final: the last playoff week's game between the champion and the runner-up.
+  const playoff = sides.filter((s) => s.playoff);
+  const lastWeek = Math.max(...playoff.map((s) => s.week));
+  const sideFor = (owner) => playoff.find((s) => s.week === lastWeek && s.owner === owner) ?? null;
+  return { games: sides.length / 2, weeks: new Set(reg.map((s) => s.week)).size, blowout, mostCats, winRun, loseRun, highs, sideFor };
+}
+
 // ---------- sample data (preview builds only) ----------
 // Round-robin schedule using each owner's real record that season to weight the coin flips,
 // so strong teams usually win. Every number it produces is invented.

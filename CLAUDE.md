@@ -27,6 +27,7 @@ Owner: Craig (Salesforce solution architect; reads/edits code comfortably, doesn
 ## Status (2026-10-29)
 - Yahoo API access works. Teams, matchups and drafts synced for every season 2005-06 to 2026-27; all teams have owners.
 - Every page reads Yahoo data. Finished seasons are written at build time by `scripts/export_data.mjs` (public tables, no secrets) into `src/matchups.json` (H2H games) and `src/history.json` (teams, finishes, full drafts, via `src/league.js`). 2004-05 comes from `src/data.js` (the sheet). The current season loads live in the browser: `L.loadLiveSeason()` (teams, draft) and `H.loadLiveGames()` (H2H). A season in progress has no finishes and is left out of best-season lists, banners and per-season averages.
+- Every finished team also carries `rank` (Yahoo final_rank, 1-12) and `seed` (regular-season finish, 1-12) for the Draft page's "Does draft position matter?" analysis and each season's record book (Seasons page). The league plays a six-team playoff (seeds 1-6; final ranks 1-6 are always those teams).
 - Head-to-head routes: `#h2h`, `#h2h-<owner>`, `#h2h-<owner>-vs-<opp>`. `SAMPLE_H2H=1` builds with no real games show made-up games with a banner.
 - Nightly refresh: `supabase/nightly_sync.sql` (pg_cron 09:00 UTC `yahoo-sync?current=1`; no rebuild).
 

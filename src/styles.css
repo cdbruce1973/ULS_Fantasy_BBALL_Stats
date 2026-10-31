@@ -293,3 +293,15 @@ select.narrow { min-width: 150px; }
 .help summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 12px; font-weight: 800; }
 .help ul { position: absolute; right: 0; top: 38px; width: min(420px, calc(100vw - 32px)); margin: 0; padding: 14px 18px 14px 34px; font-size: 14px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
 .help li + li { margin-top: 6px; }
+
+/* Draft position vs finish, and the per-season record book */
+.controls-gap { margin-top: 0; margin-bottom: 16px; }
+.chart { margin: 22px 0 18px; width: 100%; max-width: 760px; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
+.chart .bar { fill: var(--accent); }
+.chart .bar-g:hover .bar { fill: var(--ink); }
+.chart .grid-mid { stroke: var(--ink-2); stroke-dasharray: 4 4; }
+.impact-lists { margin: 26px 0 8px; }
+.sub-h { margin-top: 26px; }
+.notes { margin: 0 0 18px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.notes li::marker { color: var(--accent); }

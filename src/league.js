@@ -38,6 +38,8 @@ export async function loadLeague({ current }) {
         // A season in progress has no finishes yet; its standings come from the record.
         reg: current ? null : top3(seeded ? t.playoff_seed : t.final_rank),
         tourney: current ? null : top3(t.final_rank),
+        // Full finishes (1-12) for the draft-position and season record book pages.
+        ...(!current && { rank: t.final_rank ?? null, seed: (seeded ? t.playoff_seed : t.final_rank) ?? null }),
       })),
     };
   });

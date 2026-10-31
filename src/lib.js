@@ -198,3 +198,100 @@ export function playerFacts(player) {
     last: picks.find((d) => d.start === Math.max(...starts)).season,
   };
 }
+
+// ---------- draft position vs finish ----------
+// The league plays a six-team playoff: seeds 1-6 make it, and final ranks 1-6 are always those six teams.
+export const PLAYOFF_TEAMS = 6;
+const avg = (xs) => (xs.length ? xs.reduce((a, n) => a + n, 0) / xs.length : NaN);
+
+// Every completed season's first-round slot (a snake draft keeps it all draft) paired with how that
+// team finished. rank = tournament finish (Yahoo final_rank), seed = regular-season finish.
+export function draftFinishes() {
+  const done = new Map(sorted.filter((s) => !s.current).map((s) => [s.start, s]));
+  const out = [];
+  for (const d of DRAFT) {
+    if (d.round !== 1) continue;
+    const s = done.get(d.start);
+    const t = s && (s.teams.find((x) => x.owner === d.owner && x.team === d.team) ?? s.teams.find((x) => x.owner === d.owner));
+    if (!t || !t.rank) continue;
+    out.push({ start: d.start, season: d.season, slot: d.pick, owner: d.owner, team: t.team, player: d.player, rank: t.rank, seed: t.seed });
+  }
+  return out;
+}
+
+// How each draft slot finished. key = "rank" (tournament) or "seed" (regular season).
+export function draftImpact(key) {
+  const rows = draftFinishes();
+  const slots = [...new Set(rows.map((r) => r.slot))].sort((a, b) => a - b);
+  const sum = (list) => ({
+    n: list.length,
+    avg: avg(list.map((r) => r[key])),
+    firsts: list.filter((r) => r[key] === 1).length,
+    top3: list.filter((r) => r[key] <= 3).length,
+    playoffs: list.filter((r) => r.seed <= PLAYOFF_TEAMS).length,
+    best: Math.min(...list.map((r) => r[key])),
+    worst: Math.max(...list.map((r) => r[key])),
+  });
+  const bySlot = slots.map((slot) => {
+    const list = rows.filter((r) => r.slot === slot);
+    return { slot, ...sum(list), winners: list.filter((r) => r[key] === 1) };
+  });
+  const third = Math.ceil(slots.length / 3);
+  const groups = [0, 1, 2].map((i) => {
+    const part = slots.slice(i * third, (i + 1) * third);
+    const list = rows.filter((r) => part.includes(r.slot));
+    return { label: `Picks ${part[0]}-${part[part.length - 1]}`, ...sum(list) };
+  });
+  // Least-squares slope of finish on slot: places lost (or gained) per slot later in the draft.
+  const mx = avg(rows.map((r) => r.slot)), my = avg(rows.map((r) => r[key]));
+  const cov = rows.reduce((a, r) => a + (r.slot - mx) * (r[key] - my), 0);
+  const vx = rows.reduce((a, r) => a + (r.slot - mx) ** 2, 0);
+  const slope = vx ? cov / vx : 0;
+  const gain = (r) => r.slot - r[key];
+  const climbs = [...rows].sort((a, b) => gain(b) - gain(a) || a[key] - b[key] || b.start - a.start).slice(0, 5);
+  const falls = [...rows].sort((a, b) => gain(a) - gain(b) || b[key] - a[key] || b.start - a.start).slice(0, 5);
+  // Owners who finish better (or worse) than where they draft, with 10 or more drafts.
+  const byOwner = new Map();
+  for (const r of rows) byOwner.set(r.owner, [...(byOwner.get(r.owner) || []), r]);
+  const owners = [...byOwner]
+    .filter(([, list]) => list.length >= 10)
+    .map(([owner, list]) => ({ owner, drafts: list.length, slot: avg(list.map((r) => r.slot)), finish: avg(list.map((r) => r[key])), gain: avg(list.map(gain)) }));
+  return { rows, drafts: new Set(rows.map((r) => r.start)).size, bySlot, groups, slope, spread: slope * (slots.length - 1), climbs, falls, owners };
+}
+
+// ---------- one season's record book (standings and draft; the weekly games are in h2h.js) ----------
+export function seasonFacts(start, countTies) {
+  const i = sorted.findIndex((s) => s.start === start);
+  const s = sorted[i];
+  if (!s) return null;
+  const rows = s.teams.map((t) => ({ ...t, pct: winPct(t.w, t.l, t.t, countTies) }));
+  const byPct = [...rows].sort((a, b) => b.pct - a.pct || b.w - a.w);
+  const champ = rows.find((t) => t.tourney === 1);
+  const regChamp = rows.find((t) => t.reg === 1);
+  const draft = DRAFT.filter((d) => d.start === start);
+  const firstPick = draft.find((d) => d.pick === 1) ?? null;
+  const teamOf = (d) => d && rows.find((t) => t.owner === d.owner && t.team === d.team);
+  const slotOf = (t) => t && draft.find((d) => d.round === 1 && d.owner === t.owner && d.team === t.team);
+  // Biggest change in tournament finish from the season before, by owner (needs full finishes both years).
+  const prev = sorted[i - 1];
+  const moves = !prev || s.current ? [] : rows
+    .map((t) => ({ t, before: prev.teams.find((p) => p.owner === t.owner) }))
+    .filter(({ t, before }) => t.rank && before?.rank)
+    .map(({ t, before }) => ({ ...t, before: before.rank, change: before.rank - t.rank }));
+  moves.sort((a, b) => b.change - a.change);
+  return {
+    season: s,
+    best: byPct[0],
+    worst: byPct[byPct.length - 1],
+    champ,
+    // 2019-20 (COVID) has no seeds; its stand-in seeds are the final ranks, so a "seed" there means nothing.
+    champSeed: rows.every((t) => t.seed === t.rank) ? null : champ?.seed ?? null,
+    champSlot: slotOf(champ) ?? null,
+    regChamp,
+    regChampFinish: regChamp?.rank ?? null,
+    firstPick: firstPick && { ...firstPick, finish: teamOf(firstPick) },
+    riser: moves[0] && moves[0].change > 0 ? moves[0] : null,
+    faller: moves.length && moves[moves.length - 1].change < 0 ? moves[moves.length - 1] : null,
+    newOwners: prev ? rows.filter((t) => !sorted.slice(0, i).some((p) => p.teams.some((x) => x.owner === t.owner))) : [],
+  };
+}

@@ -315,7 +315,7 @@ function HowItWorks({ tab }) {
             says start or hold him. A big minus is a warning before you start or trade for him, or a chance to sell high. Pick a single
             category to see where the change comes from.
           </p>
-          <p className="dim">
+          <p>
             It weighs all 11 categories equally, so it doesn't know if you're punting one (a poor free-throw shooter is worth more to a
             team punting FT%). Over 2 or 3 games it swings a lot.
           </p>

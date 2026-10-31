@@ -99,13 +99,16 @@ a:hover { text-decoration-thickness: 2px; }
 .notice { margin: 14px 0 0; padding: 8px 12px; border-left: 4px solid var(--gold); background: var(--surface-2); font-size: 13px; color: var(--ink-2); }
 
 /* page structure */
-main { display: flex; flex-direction: column; gap: 36px; padding-top: 6px; }
+main { display: flex; flex-direction: column; gap: 36px; padding-top: 24px; }
 .page-head { display: flex; flex-direction: column; gap: 6px; }
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 7vw, 64px); line-height: 0.95; }
 h2 { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 1; }
 h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
 .lede { margin: 0; color: var(--ink-2); font-size: 16px; }
+.ties-toggle { margin-left: auto; align-self: center; }
+.controls .ties-toggle, .field .ties-toggle { margin-left: 0; }
+.ties-toggle .seg button { font-size: 12px; padding: 4px 10px; }
 .section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-bottom: 14px; }
 .crumb { margin: 0; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
@@ -248,7 +251,7 @@ input[type="search"], select { font: inherit; padding: 8px 10px; min-width: 220p
   .nav { display: none; }
   .nav.open { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 2px; position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 220px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
   .nav a { padding: 10px 12px; font-size: 16px; }
-  main { gap: 32px; padding-top: 4px; }
+  main { gap: 32px; padding-top: 20px; }
   .section-head { margin-bottom: 10px; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
   .stat { padding: 12px 0; }
@@ -296,14 +299,11 @@ select.narrow { min-width: 150px; }
 .linkish:hover { color: var(--accent); text-decoration-style: solid; }
 
 /* "What can I do here?": a link at the top right of the page that opens a pop-up over the content */
-/* under the header line, on the right: page help, then the ties toggle */
-.subbar { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 10px; }
-.subbar:empty { display: none; }
-.help { position: relative; z-index: 20; }
-.help summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; list-style: none; white-space: nowrap; }
+.help { position: relative; height: 0; z-index: 20; }
+.help summary { position: absolute; right: 0; top: 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; list-style: none; white-space: nowrap; }
 .help summary::-webkit-details-marker { display: none; }
 .help summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 12px; font-weight: 800; }
-.help ul { position: absolute; right: 0; top: 28px; width: min(420px, calc(100vw - 32px)); margin: 0; padding: 14px 18px 14px 34px; font-size: 14px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
+.help ul { position: absolute; right: 0; top: 38px; width: min(420px, calc(100vw - 32px)); margin: 0; padding: 14px 18px 14px 34px; font-size: 14px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
 .help li + li { margin-top: 6px; }
 
 /* Draft position vs finish, and the per-season record book */
@@ -409,6 +409,8 @@ select.narrow { min-width: 150px; }
 .how[open] > summary::before { content: "\2212"; }
 .how[open] > summary { margin-bottom: 16px; }
 .how-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; font-size: 14px; }
-.how-grid h3 { margin: 0 0 6px; font-size: 16px; }
-.how-grid p { margin: 0 0 10px; }
+.how-grid h3 { margin: 0 0 6px; font-size: 16px; color: var(--ink); }
+.how-grid p, .how-body p { margin: 0 0 10px; color: var(--ink-2); line-height: 1.5; }
+.how-body { font-size: 14px; }
+.how-grid strong, .how-body strong { color: var(--ink); }
 @media (max-width: 860px) { .how-grid { grid-template-columns: minmax(0, 1fr); } }

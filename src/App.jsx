@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as L from "./lib.js";
 import * as H from "./h2h.js";
 import OddsPage from "./Odds.jsx";
@@ -41,7 +41,7 @@ const HELP = {
     "Championship banners: every tournament champion, newest first. Gold banners won the regular season too. Hover to pause them, or tap one to open that season.",
     "Podium finishes: who has the most 1st, 2nd and 3rd place finishes, in the tournament and the regular season, and how often they make the top three.",
     "Career leaders, best single seasons, and streaks of back-to-back top-three finishes.",
-    "Use the Ties toggle under this link to figure win % with or without ties.",
+    "Use the Ties toggle next to any win % to figure it with or without ties. The choice applies across the site.",
   ],
   now: [
     "The season in progress, updated from Yahoo every morning.",
@@ -274,6 +274,24 @@ const Finish = ({ n }) =>
   n && n <= 3 ? <span className={"chip chip-" + n}>{L.ordinal(n)}</span> : <span className="dim">-</span>;
 const record = (r) => `${r.w}-${r.l}-${r.t}`;
 
+// Win % with or without ties: one site-wide choice, shown as a small toggle next to the win % it changes.
+const TiesContext = createContext({ countTies: false, setCountTies: () => {} });
+function TiesToggle({ field }) {
+  const { countTies, setCountTies } = useContext(TiesContext);
+  const toggle = (
+    <span className="ties-toggle">
+      <Segmented
+        label="How win percentage is figured"
+        value={countTies}
+        onChange={setCountTies}
+        options={[[false, "Ties left out"], [true, "Ties count"]]}
+      />
+    </span>
+  );
+  // In a row of filters it gets a label like the other fields.
+  return field ? <div className="field"><span className="field-label">Win %</span>{toggle}</div> : toggle;
+}
+
 function Segmented({ label, value, onChange, options }) {
   return (
     <div className="seg" role="group" aria-label={label}>
@@ -465,7 +483,8 @@ function RecordBook({ owners, countTies }) {
       <section aria-labelledby="career-h">
         <div className="section-head">
           <h2 id="career-h">Career leaders</h2>
-          <p className="hint">Owners with at least 10 seasons. {countTies ? "Ties count as games played." : "Ties are left out of win %."}</p>
+          <p className="hint">Owners with at least 10 seasons.</p>
+          <TiesToggle />
         </div>
         <div className="grid-3">
           <Ledger title="Win %" items={byPct.map((o) => ({ main: <OwnerLink name={o.name} />, val: L.fmtPct(o.pct), sub: `${L.fmtInt(o.w)}-${L.fmtInt(o.l)}` }))} />
@@ -477,6 +496,7 @@ function RecordBook({ owners, countTies }) {
       <section aria-labelledby="seasons-h">
         <div className="section-head">
           <h2 id="seasons-h">Best single seasons</h2>
+          <TiesToggle />
         </div>
         <div className="grid-2">
           <Ledger title="Win %" items={bestPct.map((r) => ({ main: <OwnerLink name={r.owner} />, val: L.fmtPct(r.pct), sub: `${r.season}, ${r.team}` }))} />
@@ -525,7 +545,7 @@ function OwnersPage({ owners, countTies }) {
     <>
       <header className="page-head">
         <h1>Owners</h1>
-        <p className="lede">Career totals for everyone who has run a team, through {L.LAST_FINISHED}. {countTies ? "Win % counts ties as games." : "Win % leaves ties out."}</p>
+        <p className="lede">Career totals for everyone who has run a team, through {L.LAST_FINISHED}.</p>
       </header>
       <div className="controls">
         <Field id="owner-search" label="Search owners">
@@ -535,6 +555,7 @@ function OwnersPage({ owners, countTies }) {
           <input type="checkbox" checked={vetsOnly} onChange={(e) => setVetsOnly(e.target.checked)} />
           Only owners with 10 or more seasons
         </label>
+        <TiesToggle field />
       </div>
       <DataTable caption="Career totals by owner" columns={columns} rows={rows} sort={sort} onSort={onSort} rowKey={(r) => r.name} />
     </>
@@ -633,6 +654,7 @@ function OwnerPage({ slug, owners, countTies }) {
         <div className="section-head">
           <h2 id="trend-h">Win % by season</h2>
           <p className="hint">Gold dots are tournament titles. The dashed line marks 50%.</p>
+          <TiesToggle />
         </div>
         <Sparkline rows={o.rows.filter((r) => !r.current)} countTies={countTies} />
       </section>
@@ -682,7 +704,7 @@ function SeasonsPage({ start, countTies }) {
         ))}
       </nav>
       <section aria-labelledby="season-h">
-        <div className="section-head"><h2 id="season-h">{season.label}</h2></div>
+        <div className="section-head"><h2 id="season-h">{season.label}</h2><TiesToggle /></div>
         {season.current && <p className="hint">Season in progress. Records update nightly from Yahoo; finishes appear once the playoffs are done.</p>}
         {!season.current && (
           <div className="results">
@@ -830,6 +852,7 @@ function H2HFilters({ filter, setFilter, children }) {
           options={[["all", "All"], ["reg", "Regular season"], ["playoff", "Playoffs"]]}
         />
       </div>
+      <TiesToggle field />
       <Field id="h2h-from" label="From">
         <select id="h2h-from" className="narrow" value={filter.from ?? ""} onChange={set("from")}>
           <option value="">First season</option>
@@ -1178,6 +1201,7 @@ function TeamsPage({ countTies, ver }) {
             {L.OWNER_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </Field>
+        <TiesToggle field />
         <p className="count" aria-live="polite">{rows.length} of {all.length} teams</p>
       </div>
       <DataTable
@@ -1511,6 +1535,7 @@ export default function App() {
   else page = <RecordBook owners={owners} countTies={countTies} />;
 
   return (
+    <TiesContext.Provider value={{ countTies, setCountTies }}>
     <div className="shell">
       <div className="masthead">
         <a className="brand" href="#"><Pine />Laker Fantasy NBA</a>
@@ -1526,23 +1551,12 @@ export default function App() {
           ))}
         </nav>
       </div>
-      <div className="subbar">
-        <PageHelp page={HELP[route] ? route : "home"} />
-        {/* The ties choice only changes win % on the history pages. */}
-        {!["now", "draft", "odds"].includes(route) && (
-          <Segmented
-            label="How win percentage is figured"
-            value={countTies}
-            onChange={setCountTies}
-            options={[[false, "Ties left out"], [true, "Ties count"]]}
-          />
-        )}
-      </div>
       {H.IS_SAMPLE && (
         <p className="notice notice-sample">
           Head-to-head numbers on this preview are made up so the pages can be tried out. Real matchups load from Yahoo.
         </p>
       )}
+      <PageHelp page={HELP[route] ? route : "home"} />
       <main>{page}</main>
       <footer className="foot">
         <div className="foot-top">
@@ -1564,5 +1578,6 @@ export default function App() {
         <p>An independent league site. Colors and pines nod to University Lake School, home of the Lakers, and it is not affiliated with the school.</p>
       </footer>
     </div>
+    </TiesContext.Provider>
   );
 }

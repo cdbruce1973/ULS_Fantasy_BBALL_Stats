@@ -150,8 +150,9 @@ export default function OddsPage() {
         <>
           <p className="count odds-asof">After week {odds.through} · updated {updated} · the line marks the last playoff spot</p>
           <PlayoffOdds odds={odds} />
-          <details className="odds-how">
-            <summary>How the odds work</summary>
+          <details className="how">
+            <summary><h2>How the odds work</h2></summary>
+            <div className="how-body">
             <p>
               Standings in this league are category records: every category of every week is a win, loss or tie, and the
               top {odds.spots} by win % make the playoffs. So the simulation plays out each remaining week one category at a time.
@@ -166,6 +167,7 @@ export default function OddsPage() {
               given about 75% made it 79% of the time, and the odds sharpen steadily as the weeks go by. "Projected" is the
               average final category record. Bye is a top-two seed.
             </p>
+            </div>
           </details>
         </>
       )}

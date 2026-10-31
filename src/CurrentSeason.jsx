@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as C from "./current.js";
 import { ordinal, slug } from "./lib.js";
 
@@ -21,6 +21,76 @@ const shift = (iso, n) => {
   return t.toISOString().slice(0, 10);
 };
 const signed = (v, digits = 1) => (v == null || !Number.isFinite(v) ? "-" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(digits));
+
+// ---------- in-context explanations ----------
+// A small (i) button: hover shows the tip, a click or tap pins it open; a click elsewhere or Escape closes it.
+// The pop-up is fixed to the window so it isn't clipped by scrolling tables.
+const TIPS = {
+  nightScore: "Night score: in each of the 11 categories the 12 teams are ranked on their starters' totals. Best gets 12 points, worst 1, ties split. The points are added up, so 132 is a perfect night.",
+  value: "Value: one score for how much a player helped across all 11 categories. 0 is an average game, about +3 is good, +6 or more is a big night, below 0 cost you. FG% and FT% count by attempts; fewer turnovers is better.",
+  bench: "The best games from players on a bench or IL slot that night. Their stats didn't count for the team.",
+  topPlayers: "Starters only, ranked by value.",
+  fgMin: "Players with at least 8 field goal attempts, so a 2-for-2 night doesn't top the list.",
+  ftMin: "Players with at least 5 free throw attempts.",
+  mostTo: "Most turnovers. Fewer turnovers wins the TO category.",
+  matchScore: "Categories won-lost (and tied, if any). Most categories wins the week.",
+  record: "Yahoo's record counts categories: winning 7 of 11 in a week adds 7 wins and 4 losses. It includes the week in progress.",
+  matchups: "Whole weeks won, lost and tied, from finished weeks only.",
+  weeksLeft: "Regular-season weeks still to play, including this one.",
+  change: "Window average minus season average. Green means playing above his usual level; red means slipping. For TO, fewer is better, so a drop shows green.",
+  window: "His per-game average over the chosen window. Only games while he was on a league roster count.",
+  season: "His per-game average for the whole season so far.",
+  gp: "Games played in the window.",
+  rank: "Small number: the team's league rank in this category that week (1 is best).",
+  lastVsAvg: "Last finished week's total minus the team's average for finished weeks. Green is better than usual.",
+};
+
+function Info({ tip, label = "What does this mean?" }) {
+  const [open, setOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [pos, setPos] = useState(null);
+  const btn = useRef(null);
+  const place = () => {
+    const r = btn.current?.getBoundingClientRect();
+    if (!r) return;
+    const w = Math.min(300, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 12));
+    const below = r.bottom + 8 + 160 < window.innerHeight;
+    setPos({ left, width: w, ...(below ? { top: r.bottom + 6 } : { bottom: window.innerHeight - r.top + 6 }) });
+  };
+  const show = (pin) => { place(); setOpen(true); if (pin) setPinned(true); };
+  const hide = () => { setOpen(false); setPinned(false); };
+  useEffect(() => {
+    if (!open) return;
+    const away = (e) => { if (!btn.current?.contains(e.target)) hide(); };
+    const esc = (e) => { if (e.key === "Escape") hide(); };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    window.addEventListener("scroll", hide, true);
+    window.addEventListener("resize", hide);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", esc);
+      window.removeEventListener("scroll", hide, true);
+      window.removeEventListener("resize", hide);
+    };
+  }, [open]);
+  const text = TIPS[tip] ?? tip;
+  return (
+    <span className="info" ref={btn}>
+      <button
+        type="button"
+        className="info-btn"
+        aria-label={label}
+        aria-expanded={open}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); pinned ? hide() : show(true); }}
+        onMouseEnter={() => !pinned && show(false)}
+        onMouseLeave={() => !pinned && setOpen(false)}
+      >i</button>
+      {open && pos && <span className="info-pop" role="tooltip" style={pos}>{text}</span>}
+    </span>
+  );
+}
 
 // The owner a visitor picked as "my team" is remembered in this browser only.
 function useMyOwner() {
@@ -73,6 +143,7 @@ export default function CurrentSeason({ tab }) {
       {core && current === "week" && <ThisWeek core={core} />}
       {core && current === "schedule" && <Schedule core={core} />}
       {core && current === "trends" && <Trends core={core} />}
+      {core && <HowItWorks />}
     </>
   );
 }
@@ -121,7 +192,7 @@ function LastNight({ core }) {
           <section aria-labelledby="box-h">
             <div className="section-head">
               <h2 id="box-h">{me ? `${me}'s night` : "Every team's night"}</h2>
-              <p className="hint">Starters count for the team. Bench and IL games are shown but don't count. Night score: in each of the 11 categories the teams are ranked on their starters' totals (best gets 12 points, worst 1, ties split), then the points are added up. 132 is the most possible. The top three are open; tap any team to open it.</p>
+              <p className="hint">Starters count; bench and IL games are shown dimmed. Tap a team to open it.</p>
             </div>
             <div className="box-list">
               {shown.map((t, i) => <TeamNight key={t.id + date} t={t} teamsPlayed={night.ranked.length} open={!!me || i < 3} />)}
@@ -139,12 +210,11 @@ function BestOf({ night }) {
     <section aria-labelledby="best-h">
       <div className="section-head">
         <h2 id="best-h">Best of the night</h2>
-        <p className="hint">Value is one score for how much a player helped across all 11 categories. 0 is an average game.</p>
+        <p className="hint">Tap <span className="info-btn info-demo" aria-hidden="true">i</span> for what a number means. The full story is at the bottom of the page.</p>
       </div>
-      <ValueExplainer where="night" />
       <div className="grid-3 best-grid">
         <div>
-          <h3>Owner of the night</h3>
+          <h3>Owner of the night <Info tip="nightScore" /></h3>
           <ol className="ledger">
             {[owner, ...rest.slice(0, 4)].map((t) => (
               <li key={t.id}>
@@ -156,7 +226,7 @@ function BestOf({ night }) {
           </ol>
         </div>
         <div>
-          <h3>Top players</h3>
+          <h3>Top players <Info tip="value" /></h3>
           <ol className="ledger">
             {night.topPlayers.map((p) => (
               <li key={p.player_key}>
@@ -168,7 +238,7 @@ function BestOf({ night }) {
           </ol>
         </div>
         <div>
-          <h3>Left on the bench</h3>
+          <h3>Left on the bench <Info tip="bench" /></h3>
           {night.bench.length === 0 ? (
             <p className="hint">Nobody on a bench or IL had a game.</p>
           ) : (
@@ -188,7 +258,10 @@ function BestOf({ night }) {
       <div className="cat-leaders">
         {night.leaders.map(({ cat, top }) => (
           <div key={cat.id} className="cat-card">
-            <h4>{cat.low ? "Most TO" : cat.label}{cat.id === "5" ? " (8+ FGA)" : cat.id === "8" ? " (5+ FTA)" : ""}</h4>
+            <h4>
+              {cat.low ? "Most TO" : cat.label}{cat.id === "5" ? " (8+ FGA)" : cat.id === "8" ? " (5+ FTA)" : ""}
+              {cat.id === "5" && <Info tip="fgMin" />}{cat.id === "8" && <Info tip="ftMin" />}{cat.low && <Info tip="mostTo" />}
+            </h4>
             <ol>
               {top.map(({ p, v }) => (
                 <li key={p.player_key}>
@@ -205,45 +278,58 @@ function BestOf({ night }) {
   );
 }
 
-// Plain-English account of the value score (C.playerValues) for managers.
-function ValueExplainer({ where }) {
+// The long explanations, at the bottom of every tab. The (i) pop-ups give the short version in place.
+function HowItWorks() {
   return (
-    <details className="explain">
-      <summary>What is player value, and what does it tell me?</summary>
-      <div className="explain-body">
-        <p>
-          <strong>How it's worked out.</strong> Each of the 11 categories is scored separately: how far the player's line was above or below
-          {where === "night" ? " the average for everyone who played that night" : " the average per game for every rostered player"}, measured in
-          "typical gaps" so a category where everyone is close together (steals, blocks) counts as much as one with big numbers (points).
-          The 11 scores are added up. Turnovers count in reverse, so fewer is better. FG% and FT% are weighted by attempts:
-          10-for-14 helps a lot, 1-for-1 barely moves it, and 4-for-17 hurts.
-        </p>
-        <p>
-          <strong>Reading the number.</strong> 0 is an average game. About +3 is a good game, +6 or more is a big one, and
-          below 0 means the player cost you more than he gave across the board. Because every category counts the same,
-          a center with 14 rebounds and 4 blocks can score as high as a guard with 30 points, which is how a category league works.
-        </p>
-        {where === "night" ? (
-          <p>
-            <strong>What it tells you.</strong> Who actually won your night across all categories, not just who scored the most.
-            "Left on the bench" uses the same score to show the best games your lineup didn't count, a nudge to check who you start.
-          </p>
-        ) : (
-          <p>
-            <strong>What it tells you.</strong> Change is recent form against his own season norm. A big plus means he's playing
-            above his usual level (more minutes, a hot streak, a teammate out), so start him or hold him. A big minus means he's slipping:
-            worth a look before you start or trade for him, or a sell-high check if others still value him on his name.
-            Pick a category to see where the change comes from (say, scoring is steady but his 3s fell off).
-          </p>
-        )}
-        <p className="dim">
-          It treats all 11 categories equally, so it doesn't know your strategy: if you're punting FT%, a poor free-throw shooter is worth more
-          to you than his score says. {where === "night"
-            ? "One night is a small sample; the Trends tab shows the same score over 7 or 30 days."
-            : "Over just 2 or 3 games it swings a lot, so lean on it more as the window fills up."}
-        </p>
+    <section aria-labelledby="how-h" className="how">
+      <div className="section-head">
+        <h2 id="how-h">How the numbers work</h2>
       </div>
-    </details>
+      <div className="how-grid">
+        <div>
+          <h3>Player value</h3>
+          <p>
+            One score for how much a player helped across all 11 categories. Each category is scored on its own: how far the
+            player's line was above or below the average (for everyone who played that night, or per game for every rostered
+            player in Trends), measured in "typical gaps" so steals and blocks count as much as points. The 11 scores are added up.
+            Turnovers count in reverse. FG% and FT% are weighted by attempts: 10-for-14 helps a lot, 1-for-1 barely moves it,
+            4-for-17 hurts.
+          </p>
+          <p>
+            0 is an average game, about +3 is good, +6 or more is a big night, and below 0 means he cost you across the board.
+            Because every category counts the same, a center with 14 rebounds and 4 blocks can match a guard with 30 points.
+          </p>
+        </div>
+        <div>
+          <h3>What value tells you</h3>
+          <p>
+            <strong>Last night:</strong> who really won your night across the categories, not just who scored most. Left on the bench
+            shows the best games your lineup didn't count, a nudge to check who you start.
+          </p>
+          <p>
+            <strong>Trends:</strong> Change is recent form against his own season norm. A big plus (more minutes, a hot streak, a teammate out)
+            says start or hold him. A big minus is a warning before you start or trade for him, or a chance to sell high. Pick a single
+            category to see where the change comes from.
+          </p>
+          <p className="dim">
+            It weighs all 11 categories equally, so it doesn't know if you're punting one (a poor free-throw shooter is worth more to a
+            team punting FT%). Over 2 or 3 games it swings a lot.
+          </p>
+        </div>
+        <div>
+          <h3>Night score</h3>
+          <p>
+            Rotisserie scoring for one night. In each of the 11 categories the 12 teams are ranked on their starters' totals: best gets 12
+            points, worst 1, ties split. Adding the 11 categories gives a score from 11 to 132. The highest is Owner of the night.
+          </p>
+          <h3>Records</h3>
+          <p>
+            Yahoo's record counts categories, so a 7-4 week adds 7 wins and 4 losses, and it includes the week in progress. The Matchups
+            column counts whole weeks won, lost and tied, from finished weeks.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -269,7 +355,9 @@ function TeamNight({ t, teamsPlayed, open }) {
     <details className="box" open={open}>
       <summary>
         <span className="box-owner"><OwnerLink name={t.owner} /> <span className="dim">{t.team}</span></span>
-        <span className="box-score">{t.score != null ? `Night score ${t.score.toFixed(1)} · ${ordinal(t.place)} of ${teamsPlayed}` : "No games"}</span>
+        <span className="box-score">
+          {t.score != null ? <>Night score {t.score.toFixed(1)} · {ordinal(t.place)} of {teamsPlayed} <Info tip="nightScore" /></> : "No games"}
+        </span>
       </summary>
       {list.length > 0 && (
         <div className="tbl-wrap">
@@ -278,7 +366,7 @@ function TeamNight({ t, teamsPlayed, open }) {
               <tr>
                 <th>Player</th><th>Slot</th>
                 {LINE_COLS.map(([h]) => <th key={h} className="num">{h}</th>)}
-                <th className="num">Value</th>
+                <th className="num">Value <Info tip="value" /></th>
               </tr>
             </thead>
             <tbody>
@@ -329,7 +417,7 @@ function ThisWeek({ core }) {
       <section aria-labelledby="week-h">
         <div className="section-head">
           <h2 id="week-h">Week {week}{live ? ", in progress" : ", final"}</h2>
-          <p className="hint">{live ? "Totals as of this morning's Yahoo update. " : ""}The leader in each category is highlighted. Fewer turnovers wins TO.</p>
+          <p className="hint">{live ? "Totals as of this morning's Yahoo update. " : ""}The leader in each category is highlighted.</p>
         </div>
         {games.length === 0 && <p className="hint">No matchups this week.</p>}
         <div className="match-list">
@@ -350,7 +438,7 @@ function MatchCard({ m }) {
         <div className={aw > bw ? "match-side lead" : "match-side"}>
           <OwnerLink name={m.a.owner} /><span className="dim">{m.a.team}</span>
         </div>
-        <div className="match-score">{aw}-{bw}{tie ? `-${tie}` : ""}{m.playoff ? <span className="match-tag">Playoffs</span> : null}</div>
+        <div className="match-score">{aw}-{bw}{tie ? `-${tie}` : ""}<Info tip="matchScore" />{m.playoff ? <span className="match-tag">Playoffs</span> : null}</div>
         <div className={bw > aw ? "match-side right lead" : "match-side right"}>
           <OwnerLink name={m.b.owner} /><span className="dim">{m.b.team}</span>
         </div>
@@ -360,7 +448,7 @@ function MatchCard({ m }) {
           {cats.map((c) => (
             <tr key={c.id}>
               <td className={"num" + (c.lead === 1 ? " win" : "")}>{C.fmtCat(c, c.a)}</td>
-              <th scope="row">{c.label}</th>
+              <th scope="row">{c.label}{c.low && <Info tip="mostTo" />}</th>
               <td className={c.lead === -1 ? "win" : undefined}>{C.fmtCat(c, c.b)}</td>
             </tr>
           ))}
@@ -398,11 +486,11 @@ function Schedule({ core }) {
       <section aria-labelledby="stand-h">
         <div className="section-head">
           <h2 id="stand-h">Standings</h2>
-          <p className="hint">Record is Yahoo's, counted by category (it includes the week in progress). Matchups counts finished weeks won, lost and tied.</p>
+          <p className="hint">Sorted by Yahoo's record.</p>
         </div>
         <div className="tbl-wrap">
           <table className="dt">
-            <thead><tr><th>#</th><th>Owner</th><th>Team</th><th className="num">Record</th><th className="num">Matchups</th><th className="num">Weeks left</th></tr></thead>
+            <thead><tr><th>#</th><th>Owner</th><th>Team</th><th className="num">Record <Info tip="record" /></th><th className="num">Matchups <Info tip="matchups" /></th><th className="num">Weeks left <Info tip="weeksLeft" /></th></tr></thead>
             <tbody>
               {standings.map((t, i) => (
                 <tr key={t.id} className={t.owner === me ? "mine" : undefined}>
@@ -421,7 +509,7 @@ function Schedule({ core }) {
       <section aria-labelledby="sched-h">
         <div className="section-head">
           <h2 id="sched-h">{team ? `${team.owner}'s schedule` : "Every week"}</h2>
-          <p className="hint">Finished weeks show categories won. Playoff matchups appear once Yahoo sets them. Opponent records are this season's.</p>
+          <p className="hint">Finished weeks show categories won. Playoff matchups appear once Yahoo sets them.</p>
         </div>
         {team ? <OwnerSchedule core={core} team={team} /> : <LeagueSchedule core={core} weeks={weeks} />}
       </section>
@@ -545,7 +633,7 @@ function Trends({ core }) {
           </div>
         )}
         <div className="field">
-          <label htmlFor="tr-cat">Category</label>
+          <label htmlFor="tr-cat">Category {cat === "value" && view === "players" && <Info tip="value" />}</label>
           <select id="tr-cat" value={view === "teams" && cat === "value" ? "12" : cat} onChange={(e) => setCat(e.target.value)}>
             {view === "players" && <option value="value">Overall value</option>}
             {C.CATS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -565,10 +653,10 @@ function Trends({ core }) {
             </h2>
             <p className="hint">
               Per-game averages{days ? ` from ${fmtDate(trends.since, { month: "short", day: "numeric" })} to ${fmtDate(trends.lastDate, { month: "short", day: "numeric" })}, against the player's season average` : " for the season"}.
-              {" "}Only games while on a league roster count.{me ? "" : ` League view shows players with ${minGames}+ games in the window.`}
+              {me ? "" : ` Players with ${minGames}+ games.`}
             </p>
           </div>
-          {cat === "value" && <ValueExplainer where="trends" />}
+
           {days > 0 && (
             <div className="seg trend-dir" role="group" aria-label="Sort direction">
               <button type="button" aria-pressed={sortDir === "desc"} onClick={() => setSortDir("desc")}>Improving first</button>
@@ -580,10 +668,10 @@ function Trends({ core }) {
               <thead>
                 <tr>
                   <th>Player</th>
-                  {days > 0 && <th className="num">Change</th>}
-                  {days > 0 && <th className="num">Window</th>}
-                  <th className="num">Season</th>
-                  {days > 0 && <th className="num">GP</th>}
+                  {days > 0 && <th className="num">Change <Info tip="change" /></th>}
+                  {days > 0 && <th className="num">Window <Info tip="window" /></th>}
+                  <th className="num">Season <Info tip="season" /></th>
+                  {days > 0 && <th className="num">GP <Info tip="gp" /></th>}
                   <th className="num">Season GP</th>
                   <th>Owner</th>
                 </tr>
@@ -672,7 +760,7 @@ function TeamTrends({ core, cat, me }) {
     <section aria-labelledby="tt-h">
       <div className="section-head">
         <h2 id="tt-h">{c.label} by week</h2>
-        <p className="hint">Each team's weekly total from the matchups, with its league rank that week in small type. Average and trend (last finished week against the average) use finished weeks only.{live.size ? " The week in progress is marked live." : ""}</p>
+        <p className="hint">Each team's weekly total from the matchups. Average uses finished weeks only. <Info tip="rank" /></p>
       </div>
       <div className="tbl-wrap">
         <table className="dt">
@@ -681,7 +769,7 @@ function TeamTrends({ core, cat, me }) {
               <th>Owner</th>
               {weeks.map((w) => <th key={w} className="num">Wk {w}{live.has(w) ? " (live)" : ""}</th>)}
               <th className="num">Average</th>
-              <th className="num">Last vs avg</th>
+              <th className="num">Last vs avg <Info tip="lastVsAvg" /></th>
             </tr>
           </thead>
           <tbody>

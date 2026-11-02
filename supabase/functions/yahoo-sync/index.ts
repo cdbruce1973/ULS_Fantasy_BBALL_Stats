@@ -162,7 +162,9 @@ async function syncMatchups(seasonId: number, key: string) {
           season_id: seasonId,
           week: int(mm.week),
           team1_id: side[0].id, team2_id: side[1].id,
-          is_complete: mm.status === "postevent",
+          // Yahoo can keep last week "midevent" for hours after the new week starts; once Yahoo's
+          // current week has moved past it, it is over (stat corrections land on the next nightly sync).
+          is_complete: mm.status === "postevent" || int(mm.week)! < current,
           is_playoff: mm.is_playoffs === "1",
           is_consolation: mm.is_consolation === "1",
           team1_cats_won: side[0].won, team2_cats_won: side[1].won,

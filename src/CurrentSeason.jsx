@@ -403,7 +403,7 @@ function TeamNight({ t, teamsPlayed, open }) {
 
 // ---------- This week ----------
 function ThisWeek({ core }) {
-  const weeks = [...new Set(core.matchups.filter((m) => m.done || m.started).map((m) => m.week))];
+  const weeks = [...new Set(core.matchups.filter((m) => m.done || m.begun).map((m) => m.week))];
   const [week, setWeek] = useState(core.currentWeek);
   const [me] = useMyOwner();
   const games = core.matchups

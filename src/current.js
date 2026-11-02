@@ -94,11 +94,12 @@ export async function loadSeasonCore() {
       as: g.team1_stats,
       bs: g.team2_stats,
       started: !!(g.team1_stats && Object.values(g.team1_stats).some((v) => num(v) != null)),
+      begun: !!g.team1_stats, // Yahoo stores no stats only for weeks that haven't begun
     }));
-  // This week = the first week not yet final that has started; otherwise the last week played.
-  const live = matchups.filter((m) => !m.done && m.started);
-  const played = matchups.filter((m) => m.done);
-  const currentWeek = live.length ? Math.min(...live.map((m) => m.week)) : played.length ? Math.max(...played.map((m) => m.week)) : 1;
+  // This week = the latest week Yahoo has begun, even before its first game (Monday morning). Yahoo can
+  // leave last week "not final" for a few hours after that, so the newest week wins, not the oldest unfinished one.
+  const begun = matchups.filter((m) => m.begun || m.done);
+  const currentWeek = begun.length ? Math.max(...begun.map((m) => m.week)) : 1;
   return { season, teams: [...teamById.values()], teamById, matchups, currentWeek };
 }
 
@@ -199,9 +200,11 @@ export function nightSummary(rows, core) {
 
 // ---------- trends ----------
 // Every day a rostered player played, for the whole season so far (days without a game are left out).
+// The filter is "stats does not contain {"12":"-"}". (stats->>12 would read array element 12, not key "12",
+// which matched nothing and left Trends empty.)
 export async function loadPlayerGames(seasonId) {
   const rows = await fetchAll(
-    `player_days?select=game_date,player_key,team_id,name,nba_team,positions,slot,stats&season_id=eq.${seasonId}&stats->>12=neq.-&order=game_date`
+    `player_days?select=game_date,player_key,team_id,name,nba_team,positions,slot,stats&season_id=eq.${seasonId}&stats=not.cs.%7B%2212%22%3A%22-%22%7D&order=game_date`
   );
   return rows.map((r) => ({ ...r, line: statLine(r.stats) })).filter((r) => r.line);
 }

@@ -250,7 +250,7 @@ async function syncPlayers(seasonId: number, key: string, from?: string | null, 
   return n;
 }
 
-// Today's roster for every team with Yahoo's injury status (INJ, O, GTD, DTD, SUSP, NA; empty when healthy).
+// Today's roster for every team with Yahoo's injury status (NBA report tags P, Q, D, O, plus INJ, SUSP, NA; empty when healthy).
 // Replaces the season's rows in roster_now, so a dropped player disappears.
 async function syncRosters(seasonId: number) {
   const today = easternDate(new Date());

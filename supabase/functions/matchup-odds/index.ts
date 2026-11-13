@@ -43,24 +43,31 @@ const satOut = (stats: Record<string, string> | null) => !!stats && stats["12"] 
 const ESPN_TO_YAHOO: Record<string, string> = { GS: "GSW", NY: "NYK", SA: "SAS", NO: "NOP", UTAH: "UTA", WSH: "WAS", PHO: "PHX", BRK: "BKN" };
 
 // date -> set of NBA teams playing that day (US Eastern dates), or null if the schedule couldn't be read.
-async function nbaSchedule(from: string, to: string): Promise<Map<string, Set<string>> | null> {
+// One request per day (ESPN files games under their US Eastern date). scheduleError says why it failed.
+let scheduleError = "";
+async function nbaSchedule(dates: string[]): Promise<Map<string, Set<string>> | null> {
+  const out = new Map<string, Set<string>>();
   try {
-    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${from.replaceAll("-", "")}-${to.replaceAll("-", "")}&limit=300`);
-    if (!res.ok) return null;
-    const d = await res.json();
-    const out = new Map<string, Set<string>>();
-    for (const e of d.events ?? []) {
-      if (e.season?.type === 1) continue; // preseason
-      const day = easternDate(new Date(e.date));
-      for (const c of e.competitions?.[0]?.competitors ?? []) {
-        const ab = c.team?.abbreviation;
-        if (!ab) continue;
-        if (!out.has(day)) out.set(day, new Set());
-        out.get(day)!.add(ESPN_TO_YAHOO[ab] ?? ab);
+    const pages = await Promise.all(dates.map(async (day) => {
+      const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${day.replaceAll("-", "")}`, {
+        headers: { "Accept": "application/json", "User-Agent": "Mozilla/5.0 (league stats site)" },
+      });
+      if (!res.ok) throw new Error(`ESPN ${res.status} for ${day}`);
+      return { day, d: await res.json() };
+    }));
+    for (const { day, d } of pages) {
+      out.set(day, new Set());
+      for (const e of d.events ?? []) {
+        if (e.season?.type === 1) continue; // preseason
+        for (const c of e.competitions?.[0]?.competitors ?? []) {
+          const ab = c.team?.abbreviation;
+          if (ab) out.get(day)!.add(ESPN_TO_YAHOO[ab] ?? ab);
+        }
       }
     }
     return out;
-  } catch {
+  } catch (e) {
+    scheduleError = (e as Error).message;
     return null;
   }
 }
@@ -131,7 +138,7 @@ Deno.serve(async (req) => {
     const lines = new Map([...byPlayer].map(([k, g]) => [k, g.filter((x) => x.line).map((x) => x.line!)]));
     const replacement = replacementGames(lines);
 
-    const schedule = days ? await nbaSchedule(first, weekEnd) : new Map();
+    const schedule = days ? await nbaSchedule(dates) : new Map();
 
     const teamIn = (id: number, stats: Record<string, string> | null): TeamIn & { info: any[] } => {
       const players = roster.filter((p) => p.team_id === id).map((p) => {
@@ -175,7 +182,7 @@ Deno.serve(async (req) => {
     const { error } = await db.from("matchup_odds").upsert(out, { onConflict: "season_id,week,as_of,team_id" });
     if (error) throw new Error(`matchup_odds upsert: ${error.message}`);
     return reply({
-      ok: true, week, as_of: first, days_left: days, schedule: schedule ? "espn" : "unknown (assumed half the days)",
+      ok: true, week, as_of: first, days_left: days, schedule: schedule ? "espn" : `unknown, assumed half the days (${scheduleError})`,
       rosters: roster.length, odds: out.map((o) => ({ team: o.team_id, win: o.win_pct, tie: o.tie_pct })),
     });
   } catch (e) {

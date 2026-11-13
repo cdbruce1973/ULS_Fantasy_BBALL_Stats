@@ -47,8 +47,11 @@ export const DEFAULTS: ModelOptions = { sims: 4000, slots: 8, halfLife: 21, minG
 // (Out today often means back in two or three days; long-term injuries stay out.)
 export function playChance(status: string | null | undefined, dayOffset: number, healthy = DEFAULTS.healthyPlay): number {
   switch ((status ?? "").toUpperCase()) {
-    case "": case "P": return healthy;               // healthy (P = probable)
+    // Yahoo uses the NBA's injury report tags: P probable, Q questionable, D doubtful, O out.
+    case "": return healthy;
+    case "P": return Math.min(healthy, 0.9);
     case "GTD": case "DTD": case "Q": return dayOffset === 0 ? 0.55 : 0.8;
+    case "D": return dayOffset === 0 ? 0.2 : 0.55;
     case "O": return dayOffset === 0 ? 0.03 : dayOffset <= 2 ? 0.25 : 0.45;
     case "INJ": case "IL": case "IL+": return 0.03;
     case "SUSP": case "NA": case "NR": return 0;      // suspended, not active (G League, overseas)

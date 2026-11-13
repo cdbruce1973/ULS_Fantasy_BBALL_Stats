@@ -6,7 +6,7 @@ alter table matchups add column if not exists week_start date;
 alter table matchups add column if not exists week_end date;
 
 -- 2) Today's roster for every team with Yahoo's injury status, replaced on every nightly sync
---    (yahoo-sync part "rosters"). status: INJ, O, GTD, DTD, SUSP, NA, or null when healthy.
+--    (yahoo-sync part "rosters"). status: P, Q, D, O (NBA injury report), INJ, SUSP, NA, or null when healthy.
 create table if not exists roster_now (
   season_id bigint not null references seasons(id),
   player_key text not null,

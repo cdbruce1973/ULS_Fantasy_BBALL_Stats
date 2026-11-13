@@ -336,8 +336,8 @@ function HowItWorks({ tab }) {
           <p>
             Every morning, before that day's games, the rest of the week is played out 10,000 times. Each simulation starts from
             Yahoo's totals so far. For every day left, each rostered player whose NBA team plays either plays or sits: healthy
-            players play about 95% of the time, game-time decisions about 55% today, players listed Out rarely play today but may
-            return later in the week, and long-term injuries stay out. A healthy player who sat his team's last two games is treated
+            players play about 95% of the time, Probable 90%, Questionable 55% today, Doubtful 20% today, and players listed Out
+            rarely play today but may return later in the week. Hover a tag for Yahoo's injury note. A healthy player who sat his team's last two games is treated
             as day-to-day. The team starts its best players who play that day, up to 8. Each starter's game is one of his real games
             this season picked at random, with recent games more likely, so hot and cold streaks, bad shooting nights and his mix of
             categories are all real. Every team also gets a small random swing for pickups and minutes the model can't see.
@@ -487,7 +487,7 @@ function OddsBar({ a, b, tie }) {
   );
 }
 
-const STATUS_LABEL = { O: "Out", INJ: "Injured", GTD: "Game-time decision", DTD: "Day-to-day", SUSP: "Suspended", NA: "Not active" };
+const STATUS_LABEL = { P: "Probable", Q: "Questionable", D: "Doubtful", O: "Out", INJ: "Injured", GTD: "Game-time decision", DTD: "Day-to-day", SUSP: "Suspended", NA: "Not active" };
 
 function PlayersLeft({ side, odds }) {
   const players = [...(odds.now.players ?? [])].sort((x, y) => y.games_left - x.games_left || x.name.localeCompare(y.name));
@@ -499,7 +499,7 @@ function PlayersLeft({ side, odds }) {
           <li key={p.name} className={p.status || p.guess ? "hurt" : undefined}>
             <span>{p.name} <span className="dim">{p.nba}</span></span>
             <span className="left-games">
-              {p.status ? <span className="status" title={p.note || STATUS_LABEL[p.status] || p.status}>{p.status}</span> : null}
+              {p.status ? <span className="status" title={[STATUS_LABEL[p.status] || p.status, p.note].filter(Boolean).join(": ")}>{p.status}</span> : null}
               {!p.status && p.guess ? <span className="status" title="Sat his team's last two games; treated as day-to-day">sat 2</span> : null}
               {p.games_left} {p.games_left === 1 ? "game" : "games"}
             </span>

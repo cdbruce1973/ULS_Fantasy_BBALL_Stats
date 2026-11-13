@@ -16,13 +16,14 @@ Set up by `supabase/matchup_odds.sql` (run it before deploying the two functions
 `net.http_post` to `/functions/v1/matchup-odds` with the `x-sync-key` header read from `sync_config`
 (add `?date=YYYY-MM-DD` to predict as of another morning of the current week).
 
-The NBA schedule (which teams play on each remaining day) comes from ESPN's public scoreboard, because Yahoo's API
+The NBA schedule (which teams play on each remaining day) comes from ESPN's public scoreboard, one request per day, because Yahoo's API
 doesn't expose it. If ESPN can't be reached, every player is assumed to have a game on half the days left.
 
 ## The model (`supabase/functions/matchup-odds/model.ts`)
 - Start from Yahoo's week totals so far (through last night).
 - For each remaining day and each rostered player whose NBA team plays: he plays with a chance set by his status
-  (healthy 95%, GTD/DTD 55% today and 80% later, O 3% today rising to 45% by day 4, INJ 3%, SUSP/NA 0).
+  (Yahoo uses NBA injury report tags: healthy 95%, P 90%, Q/GTD/DTD 55% today and 80% later, D 20% today and
+  55% later, O 3% today rising to 45% by day 4, INJ 3%, SUSP/NA 0).
   A healthy player who sat his team's last two games is treated as DTD.
 - The team starts its best players who play that day, up to 8 (positions are ignored).
 - Each start is one of the player's real games this season, picked at random, weighted by recency (half-life

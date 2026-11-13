@@ -3,10 +3,12 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // Pulls league data from the Yahoo Fantasy API into the database.
 //   POST /yahoo-sync?season=2025            -> sync one season (Yahoo start year)
 //   POST /yahoo-sync?current=1              -> sync the current season and the one before it
-//   optional: &parts=teams,matchups,draft,players,transactions -> limit what is pulled (default: all five)
+//   optional: &parts=teams,matchups,draft,players,transactions,rosters -> limit what is pulled (default: all six)
 //   players (current season only): each rostered player's stats for recent days. By default the last
 //   3 days (Yahoo corrects stats for a day or two); &from=YYYY-MM-DD&to=YYYY-MM-DD backfills a range (max 31 days).
 //   transactions: every add, drop and trade in the season, one row per player moved.
+//   rosters (current season only): today's roster for every team, with Yahoo's injury status, into
+//   roster_now (used by the matchup-odds function).
 // Guarded by a private key (header x-sync-key) stored in the sync_config table.
 
 const API = "https://fantasysports.yahooapis.com/fantasy/v2";
@@ -174,6 +176,7 @@ async function syncMatchups(seasonId: number, key: string) {
           // current week has moved past it, it is over (stat corrections land on the next nightly sync).
           is_complete: mm.status === "postevent" || int(mm.week)! < current,
           is_playoff: mm.is_playoffs === "1",
+          week_start: mm.week_start ?? null, week_end: mm.week_end ?? null,
           is_consolation: mm.is_consolation === "1",
           team1_cats_won: side[0].won, team2_cats_won: side[1].won,
           team1_stats: future ? null : side[0].stats, team2_stats: future ? null : side[1].stats,
@@ -181,6 +184,9 @@ async function syncMatchups(seasonId: number, key: string) {
       }
     }
   }
+  // week_start / week_end need supabase/matchup_odds.sql; until it has run, leave them out.
+  const { error: probe } = await db.from("matchups").select("week_start").limit(1);
+  if (probe) for (const r of out) { delete r.week_start; delete r.week_end; }
   await db.from("matchups").delete().eq("season_id", seasonId);
   for (let i = 0; i < out.length; i += 200) {
     const { error } = await db.from("matchups").insert(out.slice(i, i + 200));
@@ -242,6 +248,44 @@ async function syncPlayers(seasonId: number, key: string, from?: string | null, 
     n += rows.length;
   }
   return n;
+}
+
+// Today's roster for every team with Yahoo's injury status (NBA report tags P, Q, D, O, plus INJ, SUSP, NA; empty when healthy).
+// Replaces the season's rows in roster_now, so a dropped player disappears.
+async function syncRosters(seasonId: number) {
+  const today = easternDate(new Date());
+  const { data: teamRows } = await db.from("teams").select("id, yahoo_team_key").eq("season_id", seasonId);
+  const rows: any[] = [];
+  const list = teamRows ?? [];
+  for (let i = 0; i < list.length; i += 6) {
+    const batch = await Promise.all(list.slice(i, i + 6).map(async (team: any) => {
+      const d = await yget(`/team/${team.yahoo_team_key}/roster;date=${today}/players`);
+      const roster = flat(d.fantasy_content.team.slice(1)).roster ?? {};
+      return items((roster["0"] ?? roster).players).map((p: any) => {
+        const info = flat(p.player[0]);
+        const rest = flat(p.player.slice(1));
+        return {
+          season_id: seasonId,
+          player_key: info.player_key,
+          team_id: team.id,
+          name: info.name?.full ?? null,
+          nba_team: info.editorial_team_abbr ?? null,
+          positions: info.display_position ?? null,
+          slot: flat(rest.selected_position ?? []).position ?? null,
+          status: info.status || null,
+          status_full: info.status_full || null,
+          injury_note: info.injury_note || null,
+          updated_at: new Date().toISOString(),
+        };
+      });
+    }));
+    rows.push(...batch.flat());
+  }
+  if (!rows.length) return 0;
+  await db.from("roster_now").delete().eq("season_id", seasonId);
+  const { error } = await db.from("roster_now").insert(rows);
+  if (error) throw new Error(`roster_now insert: ${error.message}`);
+  return rows.length;
 }
 
 async function syncDraft(seasonId: number, key: string) {
@@ -336,15 +380,17 @@ async function syncSeason(startYear: number, parts: string[], range: { from: str
   const { data: s } = await db.from("seasons").select("id, yahoo_league_key, is_current").eq("start_year", startYear).maybeSingle();
   if (!s?.yahoo_league_key) return { season: startYear, skipped: "no Yahoo league key" };
   const result: Record<string, unknown> = { season: startYear };
-  for (const part of ["teams", "matchups", "draft", "players", "transactions"]) {
+  for (const part of ["teams", "matchups", "draft", "players", "transactions", "rosters"]) {
     if (!parts.includes(part)) continue;
     // Daily player stats are kept for the season in progress only (unless a range is asked for).
     if (part === "players" && !s.is_current && !range.from) continue;
+    if (part === "rosters" && !s.is_current) continue;
     try {
       result[part] = part === "teams" ? await syncTeams(s.id, s.yahoo_league_key)
         : part === "matchups" ? await syncMatchups(s.id, s.yahoo_league_key)
         : part === "draft" ? await syncDraft(s.id, s.yahoo_league_key)
         : part === "transactions" ? await syncTransactions(s.id, s.yahoo_league_key)
+        : part === "rosters" ? await syncRosters(s.id)
         : await syncPlayers(s.id, s.yahoo_league_key, range.from, range.to);
     } catch (e) {
       result[part] = `ERROR: ${(e as Error).message}`;
@@ -359,7 +405,7 @@ Deno.serve(async (req) => {
   if (!cfg || req.headers.get("x-sync-key") !== cfg.value) return reply({ error: "unauthorized" }, 401);
 
   const url = new URL(req.url);
-  const parts = (url.searchParams.get("parts") ?? "teams,matchups,draft,players,transactions").split(",");
+  const parts = (url.searchParams.get("parts") ?? "teams,matchups,draft,players,transactions,rosters").split(",");
   const range = { from: url.searchParams.get("from"), to: url.searchParams.get("to") };
   const started = new Date().toISOString();
   try {

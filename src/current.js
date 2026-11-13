@@ -2,6 +2,7 @@
 //   loadSeasonCore()  teams, owners and every matchup (played, this week and the schedule ahead)
 //   loadNight(date)   every rostered player's stats for one day (player_days, synced nightly)
 //   loadPlayerGames() every game a rostered player has played this season, for trends
+//   loadMatchupOdds() the matchup predictor's chances for one week (matchup_odds, recomputed every morning)
 // Yahoo stat ids are the ones in h2h.js CATEGORIES; 3 = FGA and 6 = FTA (needed for the percentages).
 import { fetchAll } from "./supabase.js";
 
@@ -271,4 +272,24 @@ export function teamWeeks(core, teamId) {
       return { week: m.week, done: m.done, opp: mine ? m.b : m.a, stats: mine ? m.as : m.bs, oppStats: mine ? m.bs : m.as, cf: mine ? m.ac : m.bc, ca: mine ? m.bc : m.ac };
     })
     .sort((x, y) => x.week - y.week);
+}
+
+// ---------- matchup odds ----------
+// Every morning's prediction for one week. Returns Map team_id -> { now: latest row, history: [{as_of, win_pct}] }.
+// An empty map when the table doesn't exist yet or the week has no predictions.
+export async function loadMatchupOdds(seasonId, week) {
+  let rows = [];
+  try {
+    rows = await fetchAll(`matchup_odds?select=*&season_id=eq.${seasonId}&week=eq.${week}&order=as_of`);
+  } catch {
+    return new Map();
+  }
+  const out = new Map();
+  for (const r of rows) {
+    const cur = out.get(r.team_id) ?? { history: [] };
+    cur.now = r;
+    cur.history.push({ as_of: r.as_of, win: Number(r.win_pct), tie: Number(r.tie_pct) });
+    out.set(r.team_id, cur);
+  }
+  return out;
 }

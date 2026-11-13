@@ -43,6 +43,10 @@ const TIPS = {
   gp: "Games played in the window.",
   rank: "Small number: the team's league rank in this category that week (1 is best).",
   lastVsAvg: "Last finished week's total minus the team's average for finished weeks. Green is better than usual.",
+  winChance: "Chance to win the week, from 10,000 simulations of the days left: who has games, who is hurt, and each player's real games this season (recent ones count more). Updated every morning before the day's games.",
+  catChance: "Small number: the chance of winning that category by Sunday night. Hover a total for the projected final.",
+  startsLeft: "Expected games still to come from players in the starting lineup (8 spots a day), after injuries and crowded days.",
+  oddsTrend: "The win chance each morning this week, oldest first.",
 };
 
 export function Info({ tip, label = "What does this mean?" }) {
@@ -280,7 +284,7 @@ function BestOf({ night }) {
 
 // The long explanations, at the bottom of the tabs that use them, closed until opened. The (i) pop-ups give the short version in place.
 // Which explanations each tab needs: value on Last night and Trends, night score on Last night, records on Schedule.
-const HOW_PARTS = { "": ["value", "uses", "night"], trends: ["value", "uses"], schedule: ["records"] };
+const HOW_PARTS = { "": ["value", "uses", "night"], week: ["predictor"], trends: ["value", "uses"], schedule: ["records"] };
 
 function HowItWorks({ tab }) {
   const parts = HOW_PARTS[tab] || [];
@@ -325,6 +329,27 @@ function HowItWorks({ tab }) {
           <p>
             Rotisserie scoring for one night. In each of the 11 categories the 12 teams are ranked on their starters' totals: best gets 12
             points, worst 1, ties split. Adding the 11 categories gives a score from 11 to 132. The highest is Owner of the night.
+          </p>
+        </div>}
+        {show("predictor") && <div>
+          <h3>Win chance</h3>
+          <p>
+            Every morning, before that day's games, the rest of the week is played out 10,000 times. Each simulation starts from
+            Yahoo's totals so far. For every day left, each rostered player whose NBA team plays either plays or sits: healthy
+            players play about 95% of the time, Probable 90%, Questionable 55% today, Doubtful 20% today, and players listed Out
+            rarely play today but may return later in the week. Hover a tag for Yahoo's injury note. A healthy player who sat his team's last two games is treated
+            as day-to-day. The team starts its best players who play that day, up to 8. Each starter's game is one of his real games
+            this season picked at random, with recent games more likely, so hot and cold streaks, bad shooting nights and his mix of
+            categories are all real. Every team also gets a small random swing for pickups and minutes the model can't see.
+          </p>
+          <p>
+            The 11 categories are then scored like Yahoo does (FG% and FT% to three places, fewer turnovers wins), and the share of
+            simulations each team wins is its chance. Ties (like 5-5-1) are shown when they're at least 1%.
+          </p>
+          <p>
+            Tested on weeks 1 to 3 of this season from every morning of each week: it picked the winner 92% of the time from
+            Tuesday on and 67% on Monday morning, and its chances lined up with how often teams actually won. It can't know about
+            pickups and lineup changes made after the morning update, or positions (it fills 8 spots with the best players who play).
           </p>
         </div>}
         {show("records") && <div>
@@ -406,6 +431,13 @@ function ThisWeek({ core }) {
   const weeks = [...new Set(core.matchups.filter((m) => m.done || m.begun).map((m) => m.week))];
   const [week, setWeek] = useState(core.currentWeek);
   const [me] = useMyOwner();
+  const [odds, setOdds] = useState(new Map());
+  useEffect(() => {
+    let live = true;
+    setOdds(new Map());
+    C.loadMatchupOdds(core.season.id, week).then((o) => live && setOdds(o));
+    return () => { live = false; };
+  }, [core.season.id, week]);
   const games = core.matchups
     .filter((m) => m.week === week && !m.consolation)
     .sort((x, y) => ((y.a.owner === me || y.b.owner === me) - (x.a.owner === me || x.b.owner === me)));
@@ -423,19 +455,64 @@ function ThisWeek({ core }) {
       <section aria-labelledby="week-h">
         <div className="section-head">
           <h2 id="week-h">Week {week}{live ? ", in progress" : ", final"}</h2>
-          <p className="hint">{live ? "Totals as of this morning's Yahoo update. " : ""}The leader in each category is highlighted.</p>
+          <p className="hint">{live ? "Totals as of this morning's Yahoo update, with each team's chance to win the week. " : ""}The leader in each category is highlighted.</p>
         </div>
         {games.length === 0 && <p className="hint">No matchups this week.</p>}
         <div className="match-list">
-          {games.map((m, i) => <MatchCard key={i} m={m} />)}
+          {games.map((m, i) => <MatchCard key={i} m={m} oa={odds.get(m.a.id)} ob={odds.get(m.b.id)} />)}
         </div>
       </section>
     </>
   );
 }
 
-function MatchCard({ m }) {
+const pct = (v) => (v == null ? "-" : v >= 99.5 && v < 100 ? ">99%" : v > 0 && v < 0.5 ? "<1%" : `${Math.round(v)}%`);
+const weekday = (iso) => fmtDate(iso, { weekday: "short" });
+
+// The win chance bar: team A's share from the left, ties in the middle, team B's from the right.
+function OddsBar({ a, b, tie }) {
+  return (
+    <div className="odds">
+      <div className="odds-nums">
+        <span className={a >= b ? "lead" : undefined}>{pct(a)}</span>
+        <span className="odds-label">Win chance <Info tip="winChance" />{tie >= 1 ? <span className="dim"> · tie {pct(tie)}</span> : null}</span>
+        <span className={b > a ? "lead" : undefined}>{pct(b)}</span>
+      </div>
+      <div className="odds-bar" role="img" aria-label={`Win chance ${pct(a)} to ${pct(b)}`}>
+        <span className="odds-a" style={{ width: `${a}%` }} />
+        <span className="odds-tie" style={{ width: `${tie}%` }} />
+        <span className="odds-b" style={{ width: `${b}%` }} />
+      </div>
+    </div>
+  );
+}
+
+const STATUS_LABEL = { P: "Probable", Q: "Questionable", D: "Doubtful", O: "Out", INJ: "Injured", GTD: "Game-time decision", DTD: "Day-to-day", SUSP: "Suspended", NA: "Not active" };
+
+function PlayersLeft({ side, odds }) {
+  const players = [...(odds.now.players ?? [])].sort((x, y) => y.games_left - x.games_left || x.name.localeCompare(y.name));
+  return (
+    <div className="left-side">
+      <h4><OwnerLink name={side.owner} /> <span className="dim">{odds.now.starts_left} starts left <Info tip="startsLeft" /></span></h4>
+      <ul>
+        {players.map((p) => (
+          <li key={p.name} className={p.status || p.guess ? "hurt" : undefined}>
+            <span>{p.name} <span className="dim">{p.nba}</span></span>
+            <span className="left-games">
+              {p.status ? <span className="status" title={[STATUS_LABEL[p.status] || p.status, p.note].filter(Boolean).join(": ")}>{p.status}</span> : null}
+              {!p.status && p.guess ? <span className="status" title="Sat his team's last two games; treated as day-to-day">sat 2</span> : null}
+              {p.games_left} {p.games_left === 1 ? "game" : "games"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function MatchCard({ m, oa, ob }) {
   const cats = C.catResults(m.as, m.bs);
+  const live = !m.done && oa?.now && ob?.now;
   const tie = cats.filter((c) => c.a != null && c.lead === 0).length;
   const aw = cats.filter((c) => c.lead === 1).length, bw = cats.filter((c) => c.lead === -1).length;
   return (
@@ -449,17 +526,41 @@ function MatchCard({ m }) {
           <OwnerLink name={m.b.owner} /><span className="dim">{m.b.team}</span>
         </div>
       </header>
+      {live && <OddsBar a={Number(oa.now.win_pct)} b={Number(ob.now.win_pct)} tie={Number(oa.now.tie_pct)} />}
+      {m.done && oa?.history?.length > 0 && ob?.history?.length > 0 && (
+        <p className="hint odds-before">
+          Predicted {weekday(oa.history[0].as_of)} morning: {pct(oa.history[0].win)} to {pct(ob.history[0].win)}
+        </p>
+      )}
       <table className="match-cats">
         <tbody>
-          {cats.map((c) => (
-            <tr key={c.id}>
-              <td className={"num" + (c.lead === 1 ? " win" : "")}>{C.fmtCat(c, c.a)}</td>
-              <th scope="row">{c.label}{c.low && <Info tip="mostTo" />}</th>
-              <td className={c.lead === -1 ? "win" : undefined}>{C.fmtCat(c, c.b)}</td>
-            </tr>
-          ))}
+          {cats.map((c) => {
+            const proj = (o) => (live ? `Projected final: ${C.fmtCat(c, Number(o.now.proj?.[c.id]))}` : undefined);
+            const chance = (o) => (live && o.now.cat_win?.[c.id] != null ? <span className="chance">{pct(Number(o.now.cat_win[c.id]))}</span> : null);
+            return (
+              <tr key={c.id}>
+                <td className={"num" + (c.lead === 1 ? " win" : "")} title={proj(oa)}>{chance(oa)}{C.fmtCat(c, c.a)}</td>
+                <th scope="row">{c.label}{c.low && <Info tip="mostTo" />}</th>
+                <td className={c.lead === -1 ? "win" : undefined} title={proj(ob)}>{C.fmtCat(c, c.b)}{chance(ob)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      {live && (
+        <details className="match-more">
+          <summary>Games left and injuries <Info tip="catChance" label="What are the small numbers?" /></summary>
+          {oa.history.length > 1 && (
+            <p className="hint">
+              {m.a.owner} each morning <Info tip="oddsTrend" />: {oa.history.map((h) => `${weekday(h.as_of)} ${pct(h.win)}`).join(" · ")}
+            </p>
+          )}
+          <div className="left-grid">
+            <PlayersLeft side={m.a} odds={oa} />
+            <PlayersLeft side={m.b} odds={ob} />
+          </div>
+        </details>
+      )}
     </article>
   );
 }

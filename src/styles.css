@@ -378,6 +378,26 @@ select.narrow { min-width: 150px; }
 .match-cats th { border-top: 1px solid var(--line); }
 .match-cats td.num { text-align: right; }
 .match-cats td.win { font-weight: 800; background: var(--surface-2); color: var(--accent); }
+.match-cats .chance { font-size: 10px; font-weight: 500; color: var(--ink-2); margin: 0 6px; }
+.odds { margin: 0 0 8px; }
+.odds-nums { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
+.odds-nums .lead { color: var(--accent); }
+.odds-label { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.odds-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--surface-2); }
+.odds-a { background: var(--accent); }
+.odds-tie { background: var(--silver); }
+.odds-b { background: var(--lake); }
+.odds-before { margin: 0 0 6px; font-size: 12px; }
+.match-more { margin-top: 8px; font-size: 13px; }
+.match-more summary { cursor: pointer; font-weight: 600; color: var(--ink-2); }
+.left-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.left-side h4 { margin: 0 0 4px; font-size: 13px; }
+.left-side ul { list-style: none; margin: 0; padding: 0; }
+.left-side li { display: flex; justify-content: space-between; gap: 6px; padding: 2px 0; border-top: 1px solid var(--line); font-size: 12px; }
+.left-side li.hurt { color: var(--ink-2); }
+.left-games { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.status { display: inline-block; font-size: 10px; font-weight: 700; padding: 0 4px; margin-right: 4px; border-radius: 3px; background: var(--gold); color: var(--medal-ink); }
+@media (max-width: 420px) { .left-grid { grid-template-columns: 1fr; } }
 .sched-weeks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
 .sched-week { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 12px; }
 .sched-week.now { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }

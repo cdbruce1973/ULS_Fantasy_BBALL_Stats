@@ -414,3 +414,16 @@ select.narrow { min-width: 150px; }
 .how-body { font-size: 14px; }
 .how-grid strong, .how-body strong { color: var(--ink); }
 @media (max-width: 860px) { .how-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Moves page: transaction log */
+.move-log { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.move-log li { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.move-date { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.move-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mv { display: inline-block; min-width: 62px; margin-right: 6px; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 700; text-align: center; }
+.mv-add { background: var(--surface-2); color: var(--accent); }
+.mv-drop { background: var(--surface-2); color: var(--ink-2); }
+.mv-trade { background: var(--accent); color: var(--on-accent); }
+@media (max-width: 560px) {
+  .move-log li { grid-template-columns: 1fr; gap: 2px; }
+}

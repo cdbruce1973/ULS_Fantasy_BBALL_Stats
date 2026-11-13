@@ -5,7 +5,7 @@
 
 create extension if not exists pg_cron;
 
--- Sync the current season and the one before it (teams, matchups, draft).
+-- Sync the current season and the one before it (teams, matchups, draft, player days, transactions).
 -- The sync key is read from sync_config inside the job, so it never appears here.
 select cron.schedule('yahoo-nightly-sync', '0 9 * * *', $$
   select net.http_post(

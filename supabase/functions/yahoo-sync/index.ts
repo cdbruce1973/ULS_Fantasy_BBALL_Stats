@@ -3,9 +3,10 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // Pulls league data from the Yahoo Fantasy API into the database.
 //   POST /yahoo-sync?season=2025            -> sync one season (Yahoo start year)
 //   POST /yahoo-sync?current=1              -> sync the current season and the one before it
-//   optional: &parts=teams,matchups,draft,players -> limit what is pulled (default: all four)
+//   optional: &parts=teams,matchups,draft,players,transactions -> limit what is pulled (default: all five)
 //   players (current season only): each rostered player's stats for recent days. By default the last
 //   3 days (Yahoo corrects stats for a day or two); &from=YYYY-MM-DD&to=YYYY-MM-DD backfills a range (max 31 days).
+//   transactions: every add, drop and trade in the season, one row per player moved.
 // Guarded by a private key (header x-sync-key) stored in the sync_config table.
 
 const API = "https://fantasysports.yahooapis.com/fantasy/v2";
@@ -88,6 +89,13 @@ async function syncTeams(seasonId: number, key: string) {
   });
   const { error } = await db.from("teams").upsert(rows, { onConflict: "yahoo_team_key" });
   if (error) throw new Error(`teams upsert: ${error.message}`);
+  // Yahoo's own move and trade counts, a cross-check for the transactions table.
+  // Written separately so a database without these columns (supabase/transactions.sql) still syncs teams.
+  for (const t of teams) {
+    const info = flat(t.team[0]);
+    await db.from("teams").update({ moves: int(info.number_of_moves), trades: int(info.number_of_trades) })
+      .eq("yahoo_team_key", info.team_key);
+  }
 
   // Yahoo hides manager GUIDs ("--hidden--"), so owners are matched in two steps.
   // Teams that already have an owner keep it (the upsert above never touches owner_id).
@@ -268,11 +276,67 @@ async function syncDraft(seasonId: number, key: string) {
   return rows.length;
 }
 
+// Every add, drop and trade. Yahoo returns transactions newest first in pages; one row per player moved.
+async function syncTransactions(seasonId: number, key: string) {
+  const { data: teamRows } = await db.from("teams").select("id, yahoo_team_key").eq("season_id", seasonId);
+  const idByKey = new Map((teamRows ?? []).map((t: any) => [t.yahoo_team_key, t.id]));
+  const PAGE = 25;
+  const seen = new Set<string>();
+  const rows: any[] = [];
+  let done = false;
+  for (let start = 0; !done && start < 20000; start += PAGE * 4) {
+    const pages = await Promise.all([0, 1, 2, 3].map((i) =>
+      yget(`/league/${key}/transactions;start=${start + i * PAGE};count=${PAGE}`)));
+    for (const d of pages) {
+      const list = items(d.fantasy_content.league[1]?.transactions);
+      let fresh = 0;
+      for (const tr of list) {
+        const meta = flat(tr.transaction[0] ?? tr.transaction);
+        if (!meta.transaction_key || seen.has(meta.transaction_key)) continue;
+        seen.add(meta.transaction_key);
+        fresh++;
+        if (meta.status && meta.status !== "successful") continue;
+        const players = items(flat(tr.transaction.slice?.(1) ?? []).players);
+        for (const p of players) {
+          const info = flat(p.player[0]);
+          const rest = flat(p.player.slice(1));
+          // transaction_data is an array for adds/drops and sometimes a bare object.
+          const td = Array.isArray(rest.transaction_data) ? flat(rest.transaction_data) : (rest.transaction_data ?? {});
+          rows.push({
+            season_id: seasonId,
+            yahoo_key: meta.transaction_key,
+            player_key: info.player_key,
+            ts: new Date(int(meta.timestamp)! * 1000).toISOString(),
+            kind: meta.type,
+            move: td.type ?? meta.type,
+            source: td.source_type ?? null,
+            from_team_id: idByKey.get(td.source_team_key) ?? null,
+            to_team_id: idByKey.get(td.destination_team_key) ?? null,
+            player_name: info.name?.full ?? null,
+            positions: info.display_position ?? null,
+            nba_team: info.editorial_team_abbr ?? null,
+            faab_bid: int(meta.faab_bid),
+          });
+        }
+      }
+      // A short page, or one with nothing new (Yahoo ignoring start), means the end.
+      if (list.length < PAGE || fresh === 0) { done = true; break; }
+    }
+  }
+  // One row per (transaction, player), in case Yahoo lists a player twice in one transaction.
+  const unique = [...new Map(rows.map((r) => [`${r.yahoo_key}|${r.player_key}`, r])).values()];
+  for (let i = 0; i < unique.length; i += 500) {
+    const { error } = await db.from("transactions").upsert(unique.slice(i, i + 500), { onConflict: "yahoo_key,player_key" });
+    if (error) throw new Error(`transactions upsert: ${error.message}`);
+  }
+  return unique.length;
+}
+
 async function syncSeason(startYear: number, parts: string[], range: { from: string | null; to: string | null }) {
   const { data: s } = await db.from("seasons").select("id, yahoo_league_key, is_current").eq("start_year", startYear).maybeSingle();
   if (!s?.yahoo_league_key) return { season: startYear, skipped: "no Yahoo league key" };
   const result: Record<string, unknown> = { season: startYear };
-  for (const part of ["teams", "matchups", "draft", "players"]) {
+  for (const part of ["teams", "matchups", "draft", "players", "transactions"]) {
     if (!parts.includes(part)) continue;
     // Daily player stats are kept for the season in progress only (unless a range is asked for).
     if (part === "players" && !s.is_current && !range.from) continue;
@@ -280,6 +344,7 @@ async function syncSeason(startYear: number, parts: string[], range: { from: str
       result[part] = part === "teams" ? await syncTeams(s.id, s.yahoo_league_key)
         : part === "matchups" ? await syncMatchups(s.id, s.yahoo_league_key)
         : part === "draft" ? await syncDraft(s.id, s.yahoo_league_key)
+        : part === "transactions" ? await syncTransactions(s.id, s.yahoo_league_key)
         : await syncPlayers(s.id, s.yahoo_league_key, range.from, range.to);
     } catch (e) {
       result[part] = `ERROR: ${(e as Error).message}`;
@@ -294,7 +359,7 @@ Deno.serve(async (req) => {
   if (!cfg || req.headers.get("x-sync-key") !== cfg.value) return reply({ error: "unauthorized" }, 401);
 
   const url = new URL(req.url);
-  const parts = (url.searchParams.get("parts") ?? "teams,matchups,draft,players").split(",");
+  const parts = (url.searchParams.get("parts") ?? "teams,matchups,draft,players,transactions").split(",");
   const range = { from: url.searchParams.get("from"), to: url.searchParams.get("to") };
   const started = new Date().toISOString();
   try {

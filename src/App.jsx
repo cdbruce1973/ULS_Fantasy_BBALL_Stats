@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import * as L from "./lib.js";
 import * as H from "./h2h.js";
 import OddsPage from "./Odds.jsx";
-import CurrentSeason from "./CurrentSeason.jsx";
+import CurrentSeason, { Info } from "./CurrentSeason.jsx";
+import * as M from "./moves.js";
 
 const NAV = [
   ["", "Record book"],
@@ -12,6 +13,7 @@ const NAV = [
   ["h2h", "Head-to-head"],
   ["teams", "Teams"],
   ["draft", "Draft"],
+  ["moves", "Moves"],
   ["odds", "Playoff odds"],
 ];
 
@@ -81,6 +83,12 @@ const HELP = {
     "Average draft position: where each owner usually picks in round 1, and how often they had the #1 pick.",
     "Every pick of every draft since 2005-06. Filter by season, pick number (try #1 for every first overall pick) or owner.",
     "Search a player, or click a player's name, for a Did you know card: how often they were drafted, who took them most, and their earliest pick.",
+  ],
+  moves: [
+    "Do moves matter? Every team's adds, ranked inside its own season, against how it finished, for the tournament or the regular season. Hover a bar for its numbers.",
+    "Who works the wire: each owner's adds per season, waiver claims, trades and average finish.",
+    "Season by season: league-wide adds and trades, the busiest and quietest teams, and how busy each champion was.",
+    "The most-added players of all time, and the transaction log for any season. Filter it by owner, type or player.",
   ],
   odds: [
     "Each team's chance of making the playoffs this season, recalculated every Monday from the week that just ended.",
@@ -1420,7 +1428,8 @@ function DraftImpact() {
 }
 
 // Bars: how often each draft slot finished in the top three. The dashed line is a fair share (3 of 12).
-function SlotChart({ rows, word }) {
+// Also used for activity rank on the Moves page (tick, what and title change the labels).
+function SlotChart({ rows, word, tick = (r) => `#${r.slot}`, what = (r) => `Pick #${r.slot}`, title }) {
   const [ref, W] = useWidth(280, 640);
   const H = 190, pad = { l: 40, r: 10, t: 14, b: 30 };
   const max = Math.max(50, ...rows.map((r) => Math.ceil(((r.top3 / r.n) * 100) / 25) * 25));
@@ -1432,8 +1441,8 @@ function SlotChart({ rows, word }) {
   for (let v = 0; v <= max; v += 25) ticks.push(v);
   return (
     <figure className="chart" ref={ref}>
-      <figcaption className="chart-title">How often each pick finished top three in the {word}. Dashed line: a fair share ({Math.round(fair)}%).</figcaption>
-      <svg className="spark" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Top-three ${word} finishes by draft slot. Full numbers are in the table below.`}>
+      <figcaption className="chart-title">{title ?? `How often each pick finished top three in the ${word}.`} Dashed line: a fair share ({Math.round(fair)}%).</figcaption>
+      <svg className="spark" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${title ?? `Top-three ${word} finishes by draft slot.`} Full numbers are in the table below.`}>
         {ticks.map((v) => (
           <g key={v}>
             <line x1={pad.l} x2={W - pad.r} y1={Y(v)} y2={Y(v)} className="grid" />
@@ -1447,12 +1456,12 @@ function SlotChart({ rows, word }) {
           const rad = Math.min(4, h / 2, barW / 2);
           return (
             <g key={r.slot} className="bar-g">
-              <title>{`Pick #${r.slot}: top three ${r.top3} of ${r.n} times (${Math.round(p)}%), average finish ${r.avg.toFixed(1)}, ${r.firsts} first-place finish${r.firsts === 1 ? "" : "es"}`}</title>
+              <title>{`${what(r)}: top three ${r.top3} of ${r.n} times (${Math.round(p)}%), average finish ${r.avg.toFixed(1)}, ${r.firsts} first-place finish${r.firsts === 1 ? "" : "es"}`}</title>
               <rect x={pad.l + i * slotW} y={pad.t} width={slotW} height={H - pad.t - pad.b} fill="transparent" />
               {h > 0 && (
                 <path className="bar" d={`M${x},${Y(0)} V${y + rad} Q${x},${y} ${x + rad},${y} H${x + barW - rad} Q${x + barW},${y} ${x + barW},${y + rad} V${Y(0)} Z`} />
               )}
-              <text x={pad.l + i * slotW + slotW / 2} y={H - 10} textAnchor="middle" className="axis">#{r.slot}</text>
+              <text x={pad.l + i * slotW + slotW / 2} y={H - 10} textAnchor="middle" className="axis">{tick(r)}</text>
             </g>
           );
         })}
@@ -1487,6 +1496,314 @@ function DraftSlots() {
           { key: "worst", label: "Latest", num: true },
         ]}
       />
+    </section>
+  );
+}
+
+// ---------- Moves (transactions) ----------
+// Adds, drops and trades from Yahoo, and whether being busy on the wire goes with finishing well.
+const pctOf = (n, of) => (of ? Math.round((n / of) * 100) + "%" : "-");
+const MOVE_TIPS = {
+  adds: "Players picked up from free agents or waivers. An add/drop counts as one add and one drop. Trades are not adds.",
+  activity: "Where a team's adds ranked in its own season: 1 is the busiest team that year. Ranking inside each season keeps eras with more moves from skewing things.",
+  r: "Correlation between activity rank and finish inside each season, from -1 to +1. 0 means no link; above 0 means busier teams finished better. Under 0.1 is no real link, 0.2 to 0.4 is a moderate one, the kind you'd notice over a few seasons but not bet a single season on.",
+  waivers: "Share of adds that came through a waiver claim rather than straight from free agents.",
+  trades: "Trades this owner was part of. A trade between two teams counts once for each of them.",
+};
+
+function MovesPage() {
+  const [key, setKey] = useState("rank");
+  const d = useMemo(() => M.movesImpact(key), [key]);
+  if (!M.hasMoves() || !d) {
+    return (
+      <>
+        <header className="page-head"><h1>Moves</h1></header>
+        <p className="hint">Transactions from Yahoo are still loading into the site. Check back soon.</p>
+      </>
+    );
+  }
+  const word = key === "rank" ? "tournament" : "regular season";
+  const [busy, , quiet] = d.groups;
+  const places = Math.abs(d.spread);
+  // Plain-words strength of the correlation: under 0.1 none, under 0.2 weak, under 0.4 moderate, else strong.
+  const a = Math.abs(d.r), better = d.r > 0;
+  const strength = a < 0.1 ? "No real link"
+    : a < 0.2 ? `A weak link: busier is slightly ${better ? "better" : "worse"}`
+    : a < 0.4 ? `Busier teams tend to finish ${better ? "better" : "worse"}`
+    : `Busier teams finish ${better ? "better" : "worse"}`;
+  const teamRow = (r) => ({ main: <OwnerLink name={r.owner} />, val: `${r.adds} adds, ${L.ordinal(r[key])}`, sub: `${r.season}, ${r.team}` });
+  return (
+    <>
+      <header className="page-head">
+        <h1>Moves</h1>
+        <p className="lede">Every add, drop and trade from Yahoo since {d.first}, and whether working the waiver wire pays off.</p>
+      </header>
+      <section aria-labelledby="moves-impact-h">
+        <div className="section-head">
+          <h2 id="moves-impact-h">Do moves matter?</h2>
+          <p className="hint">Each team's adds, ranked inside its season, against where it finished. {d.rows.length} teams over {d.seasons} completed seasons.</p>
+        </div>
+        <div className="controls controls-gap">
+          <div className="field">
+            <span className="field-label">Finish</span>
+            <Segmented label="Which finish to compare" value={key} onChange={setKey} options={[["rank", "Tournament"], ["seed", "Regular season"]]} />
+          </div>
+        </div>
+        <dl className="stats">
+          <Stat
+            label={<>Overall <Info tip={MOVE_TIPS.r} /></>}
+            value={strength}
+            sub={`Correlation ${d.r >= 0 ? "+" : ""}${d.r.toFixed(2)}. From busiest to quietest, the best-fit line moves ${places.toFixed(1)} place${places.toFixed(1) === "1.0" ? "" : "s"} ${d.spread > 0 ? "down" : "up"}.`}
+          />
+          <Stat
+            label={`${busy.label} vs ${quiet.label.toLowerCase()}`}
+            value={`${pctOf(busy.top3, busy.n)} vs ${pctOf(quiet.top3, quiet.n)}`}
+            sub={`How often they finish top three. Average finish ${busy.avg.toFixed(1)} vs ${quiet.avg.toFixed(1)}; ${busy.firsts} vs ${quiet.firsts} ${key === "rank" ? "titles" : "regular-season titles"}.`}
+          />
+          <Stat
+            label={key === "rank" ? "Champions" : "Regular-season winners"}
+            value={`${d.champAbove} of ${d.champs.length} busier than average`}
+            sub={`Made more adds than their season's median team. Their typical activity rank: ${d.champMedianRank} of 12.`}
+          />
+          <Stat
+            label={<>Trading <Info tip={MOVE_TIPS.trades} /></>}
+            value={`${pctOf(d.trades.with.top3, d.trades.with.n)} vs ${pctOf(d.trades.without.top3, d.trades.without.n)}`}
+            sub={`Top-three rate for teams that made a trade (${d.trades.with.n}) vs teams that didn't (${d.trades.without.n}). Average finish ${d.trades.with.avg.toFixed(1)} vs ${d.trades.without.avg.toFixed(1)}.`}
+          />
+        </dl>
+        <SlotChart
+          rows={d.byRank}
+          word={word}
+          tick={(r) => r.slot}
+          what={(r) => `Activity rank ${r.slot}`}
+          title={`How often each activity rank finished top three in the ${word} (1 = busiest team that season).`}
+        />
+        <MovesRankTable rows={d.byRank} keyName={key} />
+        <div className="grid-2 impact-lists">
+          <Ledger title="Busiest seasons" items={d.busiest.map(teamRow)} />
+          <Ledger title="Quietest seasons" items={d.quietest.map(teamRow)} />
+        </div>
+      </section>
+      <MovesOwners keyName={key} word={word} />
+      <MovesSeasons />
+      <MostAdded />
+      <MovesLog />
+      <details className="how">
+        <summary><h2>How the numbers work</h2></summary>
+        <div className="how-grid">
+          <div>
+            <h3>What counts</h3>
+            <p>
+              Every successful transaction Yahoo has for the league since {d.first}. An add/drop is one add and one drop.
+              Waiver claims and free-agent pickups both count as adds. Trades are counted separately, once per team in the trade.
+              Commissioner moves count by what happened to each player. 2004-05 predates the league's Yahoo history, so it has no moves.
+            </p>
+          </div>
+          <div>
+            <h3>Activity rank</h3>
+            <p>
+              The number of moves people make has changed a lot over the years, so a team is compared with its own season: 1 is the
+              team with the most adds that year, 12 the fewest. The correlation compares that rank with the finish (tournament or
+              regular season) inside each season. It runs from -1 to +1; 0 means activity tells you nothing about the finish.
+            </p>
+          </div>
+          <div>
+            <h3>Cause or effect?</h3>
+            <p>
+              A link doesn't say which way it runs. Contenders stream players for categories late in the season; teams that are
+              out of it may stop managing, or churn the roster looking for help. Completed seasons only, like the rest of the
+              all-time numbers. The season in progress shows in the by-season table and the transaction log.
+            </p>
+          </div>
+        </div>
+      </details>
+    </>
+  );
+}
+
+function MovesRankTable({ rows, keyName }) {
+  const [sort, onSort] = useSort("slot", "asc");
+  return (
+    <DataTable
+      caption="Finish by activity rank"
+      sort={sort}
+      onSort={onSort}
+      rowKey={(r) => r.slot}
+      rows={sortRows(rows, sort)}
+      columns={[
+        { key: "slot", label: <>Activity rank <Info tip={MOVE_TIPS.activity} /></>, num: true },
+        { key: "n", label: "Teams", num: true },
+        { key: "adds", label: "Avg adds", num: true, render: (r) => r.adds.toFixed(0) },
+        { key: "avg", label: "Avg finish", num: true, render: (r) => r.avg.toFixed(1) },
+        { key: "firsts", label: keyName === "rank" ? "Titles" : "1st place", num: true, render: (r) => r.firsts ? <span title={r.winners.map((w) => `${w.owner} ${w.season}`).join(", ")}>{r.firsts}</span> : <span className="dim">-</span> },
+        { key: "top3", label: "Top three", num: true, render: (r) => `${r.top3} (${pctOf(r.top3, r.n)})` },
+        { key: "playoffs", label: "Made playoffs", num: true, render: (r) => `${r.playoffs} (${pctOf(r.playoffs, r.n)})` },
+      ]}
+    />
+  );
+}
+
+function MovesOwners({ keyName, word }) {
+  const [sort, onSort] = useSort("perSeason");
+  const rows = sortRows(M.movesByOwner(keyName), sort);
+  return (
+    <section aria-labelledby="moves-owners-h">
+      <div className="section-head">
+        <h2 id="moves-owners-h">Who works the wire?</h2>
+        <p className="hint">Career transaction habits, completed seasons only, for owners with 3 or more seasons. Avg finish is the {word}.</p>
+      </div>
+      <DataTable
+        caption="Transactions by owner"
+        sort={sort}
+        onSort={onSort}
+        rowKey={(r) => r.owner}
+        rows={rows}
+        columns={[
+          { key: "owner", label: "Owner", render: (r) => <OwnerLink name={r.owner} /> },
+          { key: "seasons", label: "Seasons", num: true },
+          { key: "adds", label: <>Adds <Info tip={MOVE_TIPS.adds} /></>, num: true, render: (r) => L.fmtInt(r.adds) },
+          { key: "perSeason", label: "Per season", num: true, render: (r) => r.perSeason.toFixed(0) },
+          { key: "most", label: "Most in a season", num: true, render: (r) => <span title={r.mostSeason}>{r.most}</span> },
+          { key: "waiverPct", label: <>Via waivers <Info tip={MOVE_TIPS.waivers} /></>, num: true, render: (r) => r.waiverPct.toFixed(0) + "%" },
+          { key: "trades", label: <>Trades <Info tip={MOVE_TIPS.trades} /></>, num: true, render: (r) => r.trades || <span className="dim">-</span> },
+          { key: "activity", label: <>Avg activity rank <Info tip={MOVE_TIPS.activity} /></>, num: true, render: (r) => r.activity.toFixed(1) },
+          { key: "finish", label: "Avg finish", num: true, render: (r) => r.finish.toFixed(1) },
+        ]}
+      />
+    </section>
+  );
+}
+
+function MovesSeasons() {
+  const [sort, onSort] = useSort("start");
+  const rows = sortRows(M.movesBySeason(), sort);
+  return (
+    <section aria-labelledby="moves-seasons-h">
+      <div className="section-head">
+        <h2 id="moves-seasons-h">Season by season</h2>
+        <p className="hint">League-wide adds and trades each season, the busiest and quietest teams, and how busy the champion was.</p>
+      </div>
+      <DataTable
+        caption="Transactions by season"
+        sort={sort}
+        onSort={onSort}
+        rowKey={(r) => r.start}
+        rows={rows}
+        columns={[
+          { key: "start", label: "Season", render: (r) => <><a href={"#season-" + r.start}>{r.season}</a>{r.current && <span className="dim"> (in progress)</span>}</> },
+          { key: "adds", label: "Adds", num: true, render: (r) => L.fmtInt(r.adds) },
+          { key: "trades", label: "Trades", num: true, render: (r) => r.trades || <span className="dim">-</span> },
+          { key: "busiest", label: "Busiest", sortable: false, render: (r) => <><OwnerLink name={r.busiest.owner} /> <span className="dim">{r.busiest.moves.adds}</span></> },
+          { key: "quietest", label: "Quietest", sortable: false, render: (r) => <><OwnerLink name={r.quietest.owner} /> <span className="dim">{r.quietest.moves.adds}</span></> },
+          { key: "champ", label: "Champion", sortable: false, render: (r) => r.champ ? <><OwnerLink name={r.champ.owner} /> <span className="dim">{r.champ.adds} adds, rank {r.champ.activity}</span></> : <span className="dim">-</span> },
+        ]}
+      />
+    </section>
+  );
+}
+
+function MostAdded() {
+  const [sort, onSort] = useSort("adds");
+  if (!L.ADDED.length) return null;
+  return (
+    <section aria-labelledby="added-h">
+      <div className="section-head">
+        <h2 id="added-h">Most-added players</h2>
+        <p className="hint">The players picked up most often across every completed season, and who kept going back to them.</p>
+      </div>
+      <DataTable
+        caption="Most-added players"
+        sort={sort}
+        onSort={onSort}
+        rowKey={(r) => r.player}
+        rows={sortRows(L.ADDED.slice(0, 25), sort)}
+        columns={[
+          { key: "player", label: "Player" },
+          { key: "adds", label: "Times added", num: true },
+          { key: "seasons", label: "Seasons", num: true },
+          { key: "owners", label: "Owners", num: true },
+          { key: "topOwner", label: "Added most by", render: (r) => <><OwnerLink name={r.topOwner} /> <span className="dim">{r.topN}</span></> },
+        ]}
+      />
+    </section>
+  );
+}
+
+// The full log for one season, loaded live from Supabase when it's opened.
+function MovesLog() {
+  const seasons = M.movesBySeason().map((s) => s.start).sort((a, b) => b - a);
+  const [start, setStart] = useState(seasons[0]);
+  const [owner, setOwner] = useState("");
+  const [kind, setKind] = useState("");
+  const [query, setQuery] = useState("");
+  const [log, setLog] = useState({ start: null, rows: [], error: null });
+  useEffect(() => {
+    if (!start) return;
+    let live = true;
+    setLog({ start: null, rows: [], error: null });
+    M.loadLog(start).then((rows) => live && setLog({ start, rows, error: null }))
+      .catch((e) => live && setLog({ start, rows: [], error: e.message }));
+    return () => { live = false; };
+  }, [start]);
+  const fold = (t) => (t ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const q = fold(query.trim());
+  const owners = [...new Set(log.rows.flatMap((t) => t.players.flatMap((p) => [p.from?.owner, p.to?.owner])).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const rows = log.rows.filter((t) =>
+    (!kind || (kind === "trade" ? t.kind === "trade" : t.kind !== "trade")) &&
+    (!owner || t.players.some((p) => p.from?.owner === owner || p.to?.owner === owner)) &&
+    (!q || t.players.some((p) => fold(p.name).includes(q))));
+  const shown = rows.slice(0, 200);
+  const when = (ts) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const line = (p) => {
+    const via = p.source === "waivers" ? " (waivers)" : "";
+    if (p.move === "add") return <><span className="mv mv-add">Added</span> {p.name} <span className="dim">{p.pos}{via}</span>{p.to && <> by <OwnerLink name={p.to.owner} /></>}</>;
+    if (p.move === "drop") return <><span className="mv mv-drop">Dropped</span> {p.name} <span className="dim">{p.pos}</span>{p.from && <> by <OwnerLink name={p.from.owner} /></>}</>;
+    return <><span className="mv mv-trade">Traded</span> {p.name} <span className="dim">{p.pos}</span>{p.from && <> from <OwnerLink name={p.from.owner} /></>}{p.to && <> to <OwnerLink name={p.to.owner} /></>}</>;
+  };
+  return (
+    <section aria-labelledby="log-h">
+      <div className="section-head">
+        <h2 id="log-h">Transaction log</h2>
+        <p className="hint">Every move in a season, newest first.</p>
+      </div>
+      <div className="controls">
+        <Field id="log-season" label="Season">
+          <select id="log-season" value={start ?? ""} onChange={(e) => setStart(+e.target.value)}>
+            {seasons.map((y) => <option key={y} value={y}>{L.SEASON_LIST.find((s) => s.start === y)?.label ?? y}</option>)}
+          </select>
+        </Field>
+        <Field id="log-owner" label="Owner">
+          <select id="log-owner" value={owner} onChange={(e) => setOwner(e.target.value)}>
+            <option value="">All owners</option>
+            {owners.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </Field>
+        <Field id="log-kind" label="Type">
+          <select id="log-kind" value={kind} onChange={(e) => setKind(e.target.value)}>
+            <option value="">Everything</option>
+            <option value="wire">Adds and drops</option>
+            <option value="trade">Trades</option>
+          </select>
+        </Field>
+        <Field id="log-search" label="Search player">
+          <input id="log-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Try a name" />
+        </Field>
+      </div>
+      {log.error ? <p className="hint">The log couldn't be loaded right now ({log.error}).</p>
+        : log.start !== start ? <p className="hint">Loading…</p>
+        : (
+          <>
+            <p className="hint">{L.fmtInt(rows.length)} transaction{rows.length === 1 ? "" : "s"}{rows.length > shown.length ? `, showing the newest ${shown.length}. Narrow it with the filters.` : "."}</p>
+            <ol className="move-log">
+              {shown.map((t) => (
+                <li key={t.key}>
+                  <span className="move-date">{when(t.ts)}</span>
+                  <span className="move-body">{t.players.map((p, i) => <span key={i} className="move-line">{line(p)}</span>)}</span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
     </section>
   );
 }
@@ -1530,6 +1847,7 @@ export default function App() {
   else if (route === "h2h") page = <H2HPage param={param} countTies={countTies} filter={h2hFilter} setFilter={setH2hFilter} liveGames={liveGames} />;
   else if (route === "teams") page = <TeamsPage countTies={countTies} ver={ver} />;
   else if (route === "draft") page = <DraftPage />;
+  else if (route === "moves") page = <MovesPage key={ver} />;
   else if (route === "odds") page = <OddsPage />;
   else if (route === "now") page = <CurrentSeason tab={param} />;
   else page = <RecordBook owners={owners} countTies={countTies} />;

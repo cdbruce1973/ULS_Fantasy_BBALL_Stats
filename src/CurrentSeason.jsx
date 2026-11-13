@@ -45,7 +45,7 @@ const TIPS = {
   lastVsAvg: "Last finished week's total minus the team's average for finished weeks. Green is better than usual.",
 };
 
-function Info({ tip, label = "What does this mean?" }) {
+export function Info({ tip, label = "What does this mean?" }) {
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [pos, setPos] = useState(null);

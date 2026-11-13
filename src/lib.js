@@ -27,6 +27,8 @@ export let TEAM_SEASONS = [];
 export let OWNER_NAMES = [];
 export let DRAFT = [];
 export let LAST_FINISHED = null; // label of the newest completed season
+// Most-added players across the finished seasons (from transactions; empty before they are synced).
+export const ADDED = HISTORY.added ?? [];
 // Finished seasons only: a season in progress would top the best-season lists on a few weeks of games.
 let FINISHED = [];
 function setData(seasons, draft) {
